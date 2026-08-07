@@ -1,0 +1,1843 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Marginalia</title>
+<meta name="theme-color" content="#1F5E63">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Marginalia">
+<link rel="icon" href="data:image/svg+xml,<svg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'><rect%20width='64'%20height='64'%20rx='14'%20fill='%231F5E63'/><rect%20x='13'%20y='9'%20width='38'%20height='46'%20rx='3.5'%20fill='%23F7F6F2'/><rect%20x='23.4'%20y='9'%20width='1.6'%20height='46'%20fill='%23C2703D'%20opacity='.5'/><rect%20x='29'%20y='19'%20width='17'%20height='2.8'%20rx='1.4'%20fill='%231F5E63'/><rect%20x='29'%20y='27'%20width='17'%20height='2.8'%20rx='1.4'%20fill='%231F5E63'/><rect%20x='29'%20y='35'%20width='17'%20height='2.8'%20rx='1.4'%20fill='%231F5E63'/><rect%20x='29'%20y='43'%20width='10'%20height='2.8'%20rx='1.4'%20fill='%231F5E63'/><path%20d='M15.6%2025.6l2.3%202.5%203.5-4.8'%20stroke='%23C2703D'%20stroke-width='2.3'%20fill='none'%20stroke-linecap='round'%20stroke-linejoin='round'/></svg>">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href='data:application/manifest+json,{"name":"Marginalia","short_name":"Marginalia","lang":"es","start_url":".","display":"standalone","background_color":"%23F7F6F2","theme_color":"%231F5E63"}'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,600&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F6F2; --raised:#FFFFFF; --sunk:#EFEDE6;
+    --ink:#1C1B19; --soft:#6E6A61; --faint:#9C978C;
+    --accent:#1F5E63; --accent-ink:#FFFFFF; --accent-dim:#E3EEEE;
+    --warm:#C2703D; --warm-dim:#F6E7DC;
+    --line:#E3E0D8; --danger:#A3402E;
+    --mark:#FBE7A1;
+    --sat:45%; --lum:42%;
+    --radius:16px;
+    --shadow:0 1px 2px rgba(28,27,25,.05), 0 10px 28px -16px rgba(28,27,25,.22);
+    --sans:'Work Sans',system-ui,-apple-system,sans-serif;
+    --serif:'Fraunces',Georgia,serif;
+    --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  }
+  :root[data-theme="dark"]{
+    --bg:#15171A; --raised:#1D2025; --sunk:#111316;
+    --ink:#E8E6E1; --soft:#9A968D; --faint:#6C6961;
+    --accent:#5FBFC4; --accent-ink:#0E1416; --accent-dim:#1B2B2D;
+    --warm:#E09359; --warm-dim:#2C2119;
+    --line:#2A2E34; --danger:#E0725C;
+    --mark:#5A4A18;
+    --sat:55%; --lum:66%;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px -16px rgba(0,0,0,.6);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#15171A; --raised:#1D2025; --sunk:#111316;
+      --ink:#E8E6E1; --soft:#9A968D; --faint:#6C6961;
+      --accent:#5FBFC4; --accent-ink:#0E1416; --accent-dim:#1B2B2D;
+      --warm:#E09359; --warm-dim:#2C2119;
+      --line:#2A2E34; --danger:#E0725C;
+      --mark:#5A4A18;
+      --sat:55%; --lum:66%;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px -16px rgba(0,0,0,.6);
+    }
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; height:100%;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:var(--sans); font-size:16px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    overscroll-behavior-y:none;
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.001ms !important; transition-duration:.001ms !important;}
+  }
+  button,input,textarea,select{font:inherit; color:inherit;}
+  button{cursor:pointer; border:none; background:none;}
+  ::selection{background:var(--accent-dim); color:var(--ink);}
+
+  #app{
+    max-width:760px; margin:0 auto; min-height:100%;
+    padding:max(14px,env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));
+    position:relative;
+  }
+
+  /* ---------- topbar ---------- */
+  .topbar{display:flex; align-items:center; gap:10px; padding:4px 0 16px;}
+  .brand{
+    display:flex; align-items:center; gap:9px; margin:0; flex:1; min-width:0;
+    font-family:var(--serif); font-weight:600; font-size:25px;
+    letter-spacing:-.015em; color:var(--ink);
+  }
+  .brand-sub{
+    font-family:var(--sans); font-size:12px; font-weight:500;
+    color:var(--faint); letter-spacing:.04em; text-transform:uppercase;
+  }
+  .icon-btn{
+    width:40px; height:40px; flex:0 0 40px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--raised); color:var(--soft); border:1px solid var(--line);
+    transition:transform .14s ease, background .14s ease, color .14s ease;
+  }
+  .icon-btn:active{transform:scale(.93);}
+  .icon-btn:hover{color:var(--ink);}
+  .icon-btn.primary{background:var(--accent); color:var(--accent-ink); border-color:transparent; box-shadow:var(--shadow);}
+  .icon-btn svg{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round;}
+  .back-btn{display:flex; align-items:center; gap:6px; padding:7px 12px 7px 8px; border-radius:11px; color:var(--soft); font-size:14px; font-weight:500;}
+  .back-btn:hover{background:var(--sunk); color:var(--ink);}
+  .back-btn svg{width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+
+  /* ---------- views ---------- */
+  .view{display:none;}
+  .view.active{display:block; animation:fade .22s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(5px);} to{opacity:1; transform:none;}}
+
+  /* ---------- search bar ---------- */
+  .searchwrap{position:relative; margin-bottom:18px;}
+  .searchwrap svg{
+    position:absolute; left:13px; top:50%; transform:translateY(-50%);
+    width:18px; height:18px; stroke:var(--faint); fill:none; stroke-width:2;
+    stroke-linecap:round; stroke-linejoin:round; pointer-events:none;
+  }
+  .search{
+    width:100%; padding:12px 14px 12px 40px; border-radius:13px;
+    background:var(--raised); border:1px solid var(--line); color:var(--ink);
+    font-size:15px; outline:none; transition:border-color .15s ease;
+  }
+  .search:focus{border-color:var(--accent);}
+  .search::placeholder{color:var(--faint);}
+
+  /* ---------- subject cards ---------- */
+  .subject-grid{display:grid; gap:10px;}
+  .subject{
+    display:flex; align-items:center; gap:13px; width:100%; text-align:left;
+    padding:14px 14px 14px 0; border-radius:var(--radius);
+    background:var(--raised); border:1px solid var(--line);
+    overflow:hidden; position:relative;
+    transition:transform .14s ease, border-color .14s ease;
+  }
+  .subject:active{transform:scale(.985);}
+  .subject:hover{border-color:var(--sw);}
+  .subject .stripe{
+    width:6px; align-self:stretch; flex:0 0 6px;
+    background:var(--sw); border-radius:0;
+  }
+  .subject .body{flex:1; min-width:0;}
+  .subject h3{
+    margin:0 0 2px; font-size:16.5px; font-weight:600; color:var(--ink);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .subject .meta{font-size:13px; color:var(--faint);}
+  .subject .count{
+    flex:0 0 auto; min-width:30px; height:26px; padding:0 9px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--swdim); color:var(--sw);
+    font-size:13px; font-weight:600; font-variant-numeric:tabular-nums;
+  }
+
+  /* ---------- note rows ---------- */
+  .note-list{display:grid; gap:8px;}
+  .note{
+    display:block; width:100%; text-align:left; padding:13px 15px;
+    border-radius:14px; background:var(--raised); border:1px solid var(--line);
+    transition:transform .14s ease, border-color .14s ease;
+  }
+  .note:active{transform:scale(.985);}
+  .note:hover{border-color:var(--faint);}
+  .note .row{display:flex; align-items:baseline; gap:8px;}
+  .note h4{
+    margin:0 0 3px; font-size:15.5px; font-weight:600; flex:1; min-width:0;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .note .date{font-size:12px; color:var(--faint); flex:0 0 auto; font-variant-numeric:tabular-nums;}
+  .note .excerpt{
+    font-size:13.5px; color:var(--soft); line-height:1.45;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .note .tagline{display:flex; align-items:center; gap:7px; margin-top:7px; flex-wrap:wrap;}
+  .chip{
+    font-size:11.5px; font-weight:600; padding:2.5px 8px; border-radius:6px;
+    background:var(--swdim); color:var(--sw); letter-spacing:.01em;
+  }
+  .chip.plain{background:var(--sunk); color:var(--faint);}
+  .pin{color:var(--warm); font-size:13px;}
+  mark{background:var(--mark); color:var(--ink); border-radius:3px; padding:0 2px;}
+
+  /* ---------- section headings ---------- */
+  .sect{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    margin:24px 0 10px;
+  }
+  .sect:first-child{margin-top:0;}
+  .sect h2{
+    margin:0; font-family:var(--serif); font-size:19px; font-weight:600;
+    letter-spacing:-.01em; flex:1; min-width:0;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .sect .hint{font-size:12.5px; color:var(--faint); flex:0 0 auto;}
+
+  /* ---------- empty state ---------- */
+  .empty{
+    text-align:center; padding:52px 24px; color:var(--faint);
+  }
+  .empty svg{width:40px; height:40px; stroke:currentColor; fill:none; stroke-width:1.4; margin-bottom:12px; opacity:.65;}
+  .empty p{margin:0 0 4px; font-size:15px; color:var(--soft);}
+  .empty span{font-size:13.5px;}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    padding:11px 17px; border-radius:12px; font-size:14.5px; font-weight:600;
+    background:var(--accent); color:var(--accent-ink);
+    transition:transform .14s ease, opacity .14s ease;
+  }
+  .btn:active{transform:scale(.96);}
+  .btn.ghost{background:var(--raised); color:var(--ink); border:1px solid var(--line);}
+  .btn.danger{background:transparent; color:var(--danger); border:1px solid var(--line);}
+  .btn.full{width:100%;}
+  .btn svg{width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+  .btn[disabled]{opacity:.45; pointer-events:none;}
+  .btn-row{display:flex; gap:9px; flex-wrap:wrap;}
+
+  /* ---------- fab ---------- */
+  .fab{
+    position:fixed; right:max(18px,calc(50% - 380px + 18px));
+    bottom:calc(22px + env(safe-area-inset-bottom));
+    width:56px; height:56px; border-radius:18px; z-index:30;
+    background:var(--accent); color:var(--accent-ink);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 6px 20px -6px rgba(31,94,99,.55), var(--shadow);
+    transition:transform .16s ease;
+  }
+  .fab:active{transform:scale(.9);}
+  .fab svg{width:25px; height:25px; stroke:currentColor; fill:none; stroke-width:2.1; stroke-linecap:round;}
+
+  /* ---------- editor ---------- */
+  .ed-head{display:flex; align-items:center; gap:8px; padding:4px 0 12px;}
+  .ed-title{
+    flex:1; min-width:0; border:none; background:none; outline:none;
+    font-family:var(--serif); font-size:23px; font-weight:600; letter-spacing:-.015em;
+    padding:4px 0; color:var(--ink);
+  }
+  .ed-title::placeholder{color:var(--faint); font-style:italic;}
+  .ed-bar{
+    display:flex; align-items:center; gap:6px; margin-bottom:12px;
+    padding-bottom:12px; border-bottom:1px solid var(--line); flex-wrap:wrap;
+  }
+  .seg{display:flex; background:var(--sunk); border-radius:10px; padding:3px; gap:2px;}
+  .seg button{
+    padding:6px 14px; border-radius:8px; font-size:13.5px; font-weight:600;
+    color:var(--soft); transition:background .15s ease, color .15s ease;
+  }
+  .seg button.on{background:var(--raised); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.09);}
+  .tool{
+    width:34px; height:34px; border-radius:9px; display:flex; align-items:center;
+    justify-content:center; color:var(--soft); font-size:14px; font-weight:600;
+  }
+  .tool:hover{background:var(--sunk); color:var(--ink);}
+  .tool svg{width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+  .ed-meta{margin-left:auto; font-size:12px; color:var(--faint); white-space:nowrap;}
+
+  .ed-panes{display:block;}
+  .ed-panes.split{display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;}
+  .ed-panes.split .pane{display:block !important;}
+  .pane{display:none;}
+  .pane.on{display:block;}
+  #edBody{
+    width:100%; min-height:58vh; border:none; outline:none; resize:none;
+    background:none; color:var(--ink); font-family:var(--mono);
+    font-size:14.5px; line-height:1.72; padding:0; tab-size:2;
+  }
+  #edBody::placeholder{color:var(--faint);}
+
+  /* ---------- markdown preview ---------- */
+  .md{font-size:15.5px; line-height:1.68; word-wrap:break-word; min-height:40vh;}
+  .md > :first-child{margin-top:0;}
+  .md h1,.md h2,.md h3,.md h4{font-family:var(--serif); font-weight:600; letter-spacing:-.015em; line-height:1.25; margin:1.5em 0 .45em;}
+  .md h1{font-size:1.5em;} .md h2{font-size:1.28em;} .md h3{font-size:1.12em;} .md h4{font-size:1em;}
+  .md p{margin:0 0 .9em;}
+  .md ul,.md ol{margin:0 0 .9em; padding-left:1.35em;}
+  .md li{margin-bottom:.28em;}
+  .md li::marker{color:var(--accent);}
+  .md blockquote{
+    margin:0 0 .9em; padding:2px 0 2px 14px;
+    border-left:3px solid var(--warm); color:var(--soft);
+  }
+  .md code{
+    font-family:var(--mono); font-size:.87em; background:var(--sunk);
+    padding:.13em .38em; border-radius:5px;
+  }
+  .md pre{
+    background:var(--sunk); border:1px solid var(--line); border-radius:11px;
+    padding:13px 15px; overflow-x:auto; margin:0 0 .9em;
+  }
+  .md pre code{background:none; padding:0; font-size:13px; line-height:1.6;}
+  .md hr{border:none; border-top:1px solid var(--line); margin:1.6em 0;}
+  .md a{color:var(--accent); text-decoration-thickness:1px; text-underline-offset:2px;}
+  .md strong{font-weight:600;}
+  .md del{color:var(--faint);}
+  .md img{max-width:100%; border-radius:11px; display:block; margin:.5em 0 1em; border:1px solid var(--line);}
+  .md .tablewrap{overflow-x:auto; margin:0 0 1em;}
+  .md table{border-collapse:collapse; font-size:14px; min-width:100%;}
+  .md th,.md td{border:1px solid var(--line); padding:7px 11px; text-align:left;}
+  .md th{background:var(--sunk); font-weight:600;}
+  .md .task{list-style:none; margin-left:-1.35em; padding-left:1.5em; position:relative;}
+  .md .task input{position:absolute; left:0; top:.35em; accent-color:var(--accent); width:15px; height:15px;}
+  .md .task.done{color:var(--faint); text-decoration:line-through;}
+
+  /* ---------- image strip ---------- */
+  .shots{display:flex; gap:8px; overflow-x:auto; padding:2px 0 12px; scrollbar-width:thin;}
+  .shot{
+    position:relative; flex:0 0 auto; width:78px; height:78px; border-radius:11px;
+    overflow:hidden; border:1px solid var(--line); background:var(--sunk);
+  }
+  .shot img{width:100%; height:100%; object-fit:cover; display:block;}
+  .shot .x{
+    position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%;
+    background:rgba(0,0,0,.62); color:#fff; font-size:13px; line-height:1;
+    display:flex; align-items:center; justify-content:center; backdrop-filter:blur(3px);
+  }
+
+  /* ---------- lightbox ---------- */
+  .lightbox{
+    position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.9);
+    display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  .lightbox.on{display:flex;}
+  .lightbox img{max-width:100%; max-height:100%; border-radius:8px;}
+
+  /* ---------- sheet / modal ---------- */
+  .scrim{
+    position:fixed; inset:0; z-index:50; background:rgba(20,19,17,.42);
+    backdrop-filter:blur(2px); display:none; align-items:flex-end; justify-content:center;
+  }
+  .scrim.on{display:flex; animation:fade .18s ease;}
+  .sheet{
+    width:100%; max-width:480px; background:var(--raised);
+    border-radius:22px 22px 0 0; padding:22px 20px calc(22px + env(safe-area-inset-bottom));
+    box-shadow:0 -8px 40px -12px rgba(0,0,0,.35);
+    animation:up .24s cubic-bezier(.2,.9,.3,1); max-height:88vh; overflow-y:auto;
+  }
+  @keyframes up{from{transform:translateY(22px); opacity:.6;} to{transform:none; opacity:1;}}
+  @media(min-width:620px){
+    .scrim{align-items:center;}
+    .sheet{border-radius:20px; max-height:82vh;}
+  }
+  .sheet h3{margin:0 0 16px; font-family:var(--serif); font-size:20px; font-weight:600;}
+  .field{margin-bottom:15px;}
+  .field label{display:block; font-size:12.5px; font-weight:600; color:var(--soft); margin-bottom:6px; letter-spacing:.02em;}
+  .field input, .field textarea{
+    width:100%; padding:11px 13px; border-radius:11px; background:var(--bg);
+    border:1px solid var(--line); outline:none; font-size:15px; color:var(--ink);
+  }
+  .field input:focus, .field textarea:focus{border-color:var(--accent);}
+  .field .note-help{font-size:12px; color:var(--faint); margin-top:5px; line-height:1.4;}
+  .swatches{display:flex; gap:9px; flex-wrap:wrap;}
+  .sw{
+    width:32px; height:32px; border-radius:10px; border:2px solid transparent;
+    transition:transform .13s ease;
+  }
+  .sw.on{border-color:var(--ink); transform:scale(1.1);}
+
+  .menu-item{
+    display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+    padding:13px 4px; border-bottom:1px solid var(--line); font-size:15px; color:var(--ink);
+  }
+  .menu-item:last-child{border-bottom:none;}
+  .menu-item svg{width:19px; height:19px; stroke:currentColor; fill:none; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; color:var(--soft); flex:0 0 19px;}
+  .menu-item.danger{color:var(--danger);} .menu-item.danger svg{color:var(--danger);}
+  .menu-item .tail{margin-left:auto; font-size:13px; color:var(--faint);}
+
+  /* ---------- settings ---------- */
+  .card{
+    background:var(--raised); border:1px solid var(--line);
+    border-radius:var(--radius); padding:17px; margin-bottom:12px;
+  }
+  .card h3{margin:0 0 4px; font-size:15.5px; font-weight:600;}
+  .card p{margin:0 0 13px; font-size:13.5px; color:var(--soft); line-height:1.5;}
+  .status{
+    display:inline-flex; align-items:center; gap:7px; font-size:13px;
+    font-weight:600; padding:5px 11px; border-radius:8px; margin-bottom:12px;
+  }
+  .status.ok{background:var(--accent-dim); color:var(--accent);}
+  .status.off{background:var(--sunk); color:var(--faint);}
+  .status.err{background:var(--warm-dim); color:var(--danger);}
+  .status .dot{width:7px; height:7px; border-radius:50%; background:currentColor;}
+
+  /* ---------- toast ---------- */
+  .toast{
+    position:fixed; left:50%; bottom:calc(26px + env(safe-area-inset-bottom));
+    transform:translate(-50%,80px); z-index:200;
+    background:var(--ink); color:var(--bg); padding:11px 18px; border-radius:12px;
+    font-size:14px; font-weight:500; box-shadow:var(--shadow);
+    opacity:0; transition:transform .26s cubic-bezier(.2,.9,.3,1), opacity .26s ease;
+    pointer-events:none; max-width:88vw; text-align:center;
+  }
+  .toast.on{transform:translate(-50%,0); opacity:1;}
+
+  .spin{animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ HOME : subjects ============ -->
+  <section class="view active" id="vHome">
+    <div class="topbar">
+      <h1 class="brand">
+        <svg width="26" height="26" viewBox="0 0 64 64" aria-hidden="true">
+          <rect width="64" height="64" rx="14" fill="var(--accent)"/>
+          <rect x="13" y="9" width="38" height="46" rx="3.5" fill="var(--raised)"/>
+          <rect x="23.4" y="9" width="1.6" height="46" fill="var(--warm)" opacity=".5"/>
+          <rect x="29" y="19" width="17" height="2.8" rx="1.4" fill="var(--accent)"/>
+          <rect x="29" y="27" width="17" height="2.8" rx="1.4" fill="var(--accent)"/>
+          <rect x="29" y="35" width="17" height="2.8" rx="1.4" fill="var(--accent)"/>
+          <rect x="29" y="43" width="10" height="2.8" rx="1.4" fill="var(--accent)"/>
+          <path d="M15.6 25.6l2.3 2.5 3.5-4.8" stroke="var(--warm)" stroke-width="2.3"
+                fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Marginalia
+      </h1>
+      <button class="icon-btn" id="btnTheme" title="Tema" aria-label="Cambiar tema">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>
+      </button>
+      <button class="icon-btn" id="btnSettings" title="Ajustes" aria-label="Ajustes">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
+
+    <div class="searchwrap">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input class="search" id="qHome" type="search" placeholder="Buscar en todos los apuntes…" autocomplete="off">
+    </div>
+
+    <div id="homeBody"></div>
+    <button class="fab" id="fabSubject" aria-label="Nueva materia">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+  </section>
+
+  <!-- ============ SUBJECT : note list ============ -->
+  <section class="view" id="vSubject">
+    <div class="topbar">
+      <button class="back-btn" data-back="home">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg> Materias
+      </button>
+      <span style="flex:1"></span>
+      <button class="icon-btn" id="btnSubjMenu" aria-label="Opciones de materia">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.4" fill="currentColor" stroke="none"/></svg>
+      </button>
+    </div>
+    <div class="sect"><h2 id="subjName"></h2><span class="hint" id="subjHint"></span></div>
+    <div class="searchwrap">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input class="search" id="qSubject" type="search" placeholder="Buscar en esta materia…" autocomplete="off">
+    </div>
+    <div id="subjBody"></div>
+    <button class="fab" id="fabNote" aria-label="Nuevo apunte">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+  </section>
+
+  <!-- ============ EDITOR ============ -->
+  <section class="view" id="vEdit">
+    <div class="topbar">
+      <button class="back-btn" id="edBack">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg> <span id="edBackLabel">Volver</span>
+      </button>
+      <span style="flex:1"></span>
+      <button class="icon-btn" id="btnNoteMenu" aria-label="Opciones del apunte">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.4" fill="currentColor" stroke="none"/></svg>
+      </button>
+    </div>
+
+    <div class="ed-head">
+      <input class="ed-title" id="edTitle" placeholder="Título del apunte" autocomplete="off">
+    </div>
+
+    <div class="ed-bar">
+      <div class="seg" id="edSeg">
+        <button data-pane="write" class="on">Escribir</button>
+        <button data-pane="read">Leer</button>
+      </div>
+      <button class="tool" data-md="bold" title="Negrita (Ctrl+B)"><strong>B</strong></button>
+      <button class="tool" data-md="italic" title="Cursiva (Ctrl+I)"><em>I</em></button>
+      <button class="tool" data-md="head" title="Encabezado">H</button>
+      <button class="tool" data-md="list" title="Lista">
+        <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>
+      </button>
+      <button class="tool" data-md="code" title="Código">
+        <svg viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
+      </button>
+      <button class="tool" id="btnShot" title="Foto del pizarrón">
+        <svg viewBox="0 0 24 24"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.2a1 1 0 0 0 .8-.4l1-1.3a1 1 0 0 1 .8-.4h5.4a1 1 0 0 1 .8.4l1 1.3a1 1 0 0 0 .8.4h1.2A2.5 2.5 0 0 1 21 8.5v9A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.4"/></svg>
+      </button>
+      <span class="ed-meta" id="edMeta"></span>
+    </div>
+
+    <div class="shots" id="edShots" hidden></div>
+
+    <div class="ed-panes" id="edPanes">
+      <div class="pane on" id="paneWrite">
+        <textarea id="edBody" placeholder="Escribí acá. Markdown funciona: **negrita**, # título, - listas, `código`, > cita, tablas y - [ ] tareas." spellcheck="true"></textarea>
+      </div>
+      <div class="pane" id="paneRead"><div class="md" id="edPreview"></div></div>
+    </div>
+    <input type="file" id="fileShot" accept="image/*" capture="environment" multiple hidden>
+  </section>
+
+  <!-- ============ SEARCH RESULTS ============ -->
+  <section class="view" id="vSearch">
+    <div class="topbar">
+      <button class="back-btn" data-back="home">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg> Volver
+      </button>
+    </div>
+    <div class="sect"><h2 id="searchTitle">Resultados</h2><span class="hint" id="searchHint"></span></div>
+    <div id="searchBody"></div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section class="view" id="vSettings">
+    <div class="topbar">
+      <button class="back-btn" data-back="home">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg> Volver
+      </button>
+    </div>
+    <div class="sect"><h2>Ajustes</h2><span class="hint" id="verLabel"></span></div>
+
+    <div class="card">
+      <h3>Sincronización</h3>
+      <div id="syncStatus"></div>
+      <p id="syncBlurb">Conectá una cuenta para que los apuntes y las fotos viajen entre el celu y la notebook. Sin esto la app funciona igual, pero los datos se quedan en este dispositivo.</p>
+      <div id="syncPanel"></div>
+    </div>
+
+    <div class="card">
+      <h3>Copia de seguridad</h3>
+      <p>Un archivo <code>.json</code> con todas las materias, apuntes y fotos. Guardalo de vez en cuando aunque tengas sync.</p>
+      <div class="btn-row">
+        <button class="btn ghost" id="btnExport">
+          <svg viewBox="0 0 24 24"><path d="M12 3v12M7.5 10.5L12 15l4.5-4.5M4 17v2.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V17"/></svg>
+          Exportar
+        </button>
+        <button class="btn ghost" id="btnImport">
+          <svg viewBox="0 0 24 24"><path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M4 17v2.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V17"/></svg>
+          Importar
+        </button>
+      </div>
+      <input type="file" id="fileImport" accept="application/json,.json" hidden>
+    </div>
+
+    <div class="card">
+      <h3>Almacenamiento</h3>
+      <p id="storageInfo">Calculando…</p>
+      <div class="btn-row">
+        <button class="btn danger" id="btnPurge">Vaciar la papelera</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="scrim" id="scrim"><div class="sheet" id="sheet"></div></div>
+<div class="lightbox" id="lightbox"><img id="lightboxImg" alt=""></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const VERSION = "v1.0.0";
+
+/* ============================================================
+   0 · utilidades
+   ============================================================ */
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const now = () => new Date().toISOString();
+const uid = () => (crypto.randomUUID ? crypto.randomUUID()
+  : "x" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
+
+const esc = s => String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
+/* búsqueda insensible a acentos — importante en español */
+const fold = s => String(s || "").toLowerCase()
+  .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+function relTime(iso){
+  if (!iso) return "";
+  const d = new Date(iso), diff = (Date.now() - d.getTime()) / 1000;
+  if (diff < 60) return "recién";
+  if (diff < 3600) return Math.floor(diff / 60) + " min";
+  if (diff < 86400) return Math.floor(diff / 3600) + " h";
+  if (diff < 172800) return "ayer";
+  if (diff < 604800) return Math.floor(diff / 86400) + " días";
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleDateString("es", { day: "numeric", month: "short", year: sameYear ? undefined : "2-digit" });
+}
+
+let toastTimer;
+function toast(msg){
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("on"), 2400);
+}
+
+/* paleta de materias: sólo el matiz, la app deriva el color según el tema */
+const HUES = [188, 24, 262, 145, 344, 42, 212, 0];
+const hueCss = h => `hsl(${h} var(--sat) var(--lum))`;
+const hueDim = h => `hsl(${h} calc(var(--sat) * .55) calc(var(--lum) + 40%) / .17)`;
+function hueVars(h){ return `--sw:${hueCss(h)}; --swdim:${hueDim(h)}`; }
+
+/* ============================================================
+   1 · IndexedDB  (fuente de verdad local)
+   ============================================================ */
+const DB_NAME = "marginalia", DB_VER = 1;
+let _db;
+
+function openDB(){
+  if (_db) return Promise.resolve(_db);
+  return new Promise((res, rej) => {
+    const rq = indexedDB.open(DB_NAME, DB_VER);
+    rq.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains("subjects")) db.createObjectStore("subjects", { keyPath: "id" });
+      if (!db.objectStoreNames.contains("notes")){
+        const s = db.createObjectStore("notes", { keyPath: "id" });
+        s.createIndex("subject_id", "subject_id");
+      }
+      if (!db.objectStoreNames.contains("images")){
+        const s = db.createObjectStore("images", { keyPath: "id" });
+        s.createIndex("note_id", "note_id");
+      }
+      if (!db.objectStoreNames.contains("meta")) db.createObjectStore("meta");
+    };
+    rq.onsuccess = () => { _db = rq.result; res(_db); };
+    rq.onerror = () => rej(rq.error);
+  });
+}
+function tx(store, mode){
+  return openDB().then(db => db.transaction(store, mode || "readonly").objectStore(store));
+}
+const idbGet    = (s, k)  => tx(s).then(o => new Promise((r, j) => { const q = o.get(k); q.onsuccess = () => r(q.result); q.onerror = () => j(q.error); }));
+const idbAll    = s       => tx(s).then(o => new Promise((r, j) => { const q = o.getAll(); q.onsuccess = () => r(q.result || []); q.onerror = () => j(q.error); }));
+const idbPut    = (s, v, k) => tx(s, "readwrite").then(o => new Promise((r, j) => { const q = o.put(v, k); q.onsuccess = () => r(v); q.onerror = () => j(q.error); }));
+const idbDel    = (s, k)  => tx(s, "readwrite").then(o => new Promise((r, j) => { const q = o.delete(k); q.onsuccess = () => r(); q.onerror = () => j(q.error); }));
+const metaGet   = k       => idbGet("meta", k);
+const metaSet   = (k, v)  => idbPut("meta", v, k);
+
+/* ============================================================
+   2 · estado en memoria
+   ============================================================ */
+const S = {
+  subjects: [],
+  notes: [],
+  images: [],       // sin blob: {id, note_id, updated_at, deleted, remote}
+  view: "home",
+  subjectId: null,
+  noteId: null,
+  pane: "write",
+  query: "",
+  urlCache: new Map(),   // imageId -> objectURL
+  dirty: false,
+  saveTimer: null
+};
+
+const liveSubjects = () => S.subjects.filter(s => !s.deleted).sort((a, b) => a.name.localeCompare(b.name, "es"));
+const liveNotes    = sid => S.notes.filter(n => !n.deleted && (!sid || n.subject_id === sid));
+const noteById     = id => S.notes.find(n => n.id === id);
+const subjById     = id => S.subjects.find(s => s.id === id);
+
+function sortNotes(list){
+  return list.slice().sort((a, b) =>
+    (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) ||
+    (b.updated_at || "").localeCompare(a.updated_at || ""));
+}
+
+async function loadAll(){
+  const [subs, nts, imgs] = await Promise.all([idbAll("subjects"), idbAll("notes"), idbAll("images")]);
+  S.subjects = subs;
+  S.notes = nts;
+  S.images = imgs.map(i => ({ id: i.id, note_id: i.note_id, updated_at: i.updated_at, deleted: i.deleted, remote: i.remote, dirty: i.dirty }));
+}
+
+async function imageURL(id){
+  if (S.urlCache.has(id)) return S.urlCache.get(id);
+  const rec = await idbGet("images", id);
+  if (!rec || !rec.blob) return null;
+  const url = URL.createObjectURL(rec.blob);
+  S.urlCache.set(id, url);
+  return url;
+}
+
+/* ============================================================
+   3 · markdown  (propio y compacto — sin dependencias, offline)
+   ============================================================ */
+function mdInline(src){
+  let t = esc(src);
+  const stash = [];
+  const keep = html => "\u0000" + (stash.push(html) - 1) + "\u0000";
+
+  t = t.replace(/`([^`]+?)`/g, (_, c) => keep(`<code>${c}</code>`));
+  t = t.replace(/!\[\[([\w-]+)\]\]/g, (_, id) => keep(`<img data-img="${esc(id)}" alt="Foto">`));
+  t = t.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, txt, href) =>
+    /^(https?:|mailto:|#|\/)/i.test(href) ? keep(`<a href="${esc(href)}" target="_blank" rel="noopener">${txt}</a>`) : `[${txt}](${href})`);
+  t = t.replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)\]])/g, (m) => keep(`<a href="${m}" target="_blank" rel="noopener">${m}</a>`));
+
+  t = t.replace(/\*\*([^*]+?)\*\*/g, "<strong>$1</strong>");
+  t = t.replace(/__([^_]+?)__/g, "<strong>$1</strong>");
+  t = t.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, "$1<em>$2</em>");
+  t = t.replace(/(^|[^_\w])_([^_\n]+?)_(?![\w_])/g, "$1<em>$2</em>");
+  t = t.replace(/~~([^~]+?)~~/g, "<del>$1</del>");
+  t = t.replace(/==([^=]+?)==/g, "<mark>$1</mark>");
+
+  return t.replace(/\u0000(\d+)\u0000/g, (_, i) => stash[+i]);
+}
+
+function mdRender(src){
+  const lines = String(src || "").replace(/\r\n?/g, "\n").split("\n");
+  const out = [];
+  let i = 0;
+
+  const isTableSep = s => /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?\s*$/.test(s);
+  const cells = s => s.replace(/^\s*\|/, "").replace(/\|\s*$/, "").split("|").map(c => c.trim());
+
+  while (i < lines.length){
+    const ln = lines[i];
+
+    if (!ln.trim()){ i++; continue; }
+
+    /* bloque de código */
+    const fence = ln.match(/^```(\w*)\s*$/);
+    if (fence){
+      const buf = [];
+      i++;
+      while (i < lines.length && !/^```\s*$/.test(lines[i])) buf.push(lines[i++]);
+      i++;
+      out.push(`<pre><code>${esc(buf.join("\n"))}</code></pre>`);
+      continue;
+    }
+
+    /* separador */
+    if (/^\s*([-*_])\s*\1\s*\1[\s\-*_]*$/.test(ln)){ out.push("<hr>"); i++; continue; }
+
+    /* encabezado */
+    const h = ln.match(/^(#{1,6})\s+(.*)$/);
+    if (h){
+      const lvl = Math.min(h[1].length, 4);
+      out.push(`<h${lvl}>${mdInline(h[2].trim())}</h${lvl}>`);
+      i++; continue;
+    }
+
+    /* tabla */
+    if (ln.includes("|") && i + 1 < lines.length && isTableSep(lines[i + 1])){
+      const head = cells(ln);
+      i += 2;
+      const rows = [];
+      while (i < lines.length && lines[i].includes("|") && lines[i].trim()) rows.push(cells(lines[i++]));
+      out.push(`<div class="tablewrap"><table><thead><tr>${head.map(c => `<th>${mdInline(c)}</th>`).join("")}</tr></thead><tbody>${
+        rows.map(r => `<tr>${head.map((_, k) => `<td>${mdInline(r[k] || "")}</td>`).join("")}</tr>`).join("")
+      }</tbody></table></div>`);
+      continue;
+    }
+
+    /* cita */
+    if (/^\s*>\s?/.test(ln)){
+      const buf = [];
+      while (i < lines.length && /^\s*>\s?/.test(lines[i])) buf.push(lines[i++].replace(/^\s*>\s?/, ""));
+      out.push(`<blockquote>${mdRender(buf.join("\n"))}</blockquote>`);
+      continue;
+    }
+
+    /* listas (con un nivel de anidado) */
+    if (/^\s*([-*+]|\d+[.)])\s+/.test(ln)){
+      const ordered = /^\s*\d+[.)]\s+/.test(ln);
+      const items = [];
+      const baseIndent = ln.match(/^\s*/)[0].length;
+      while (i < lines.length && /^\s*([-*+]|\d+[.)])\s+/.test(lines[i])){
+        const cur = lines[i];
+        const ind = cur.match(/^\s*/)[0].length;
+        if (ind > baseIndent + 1 && items.length){
+          const sub = [];
+          while (i < lines.length && /^\s*([-*+]|\d+[.)])\s+/.test(lines[i]) &&
+                 lines[i].match(/^\s*/)[0].length > baseIndent + 1) sub.push(lines[i++]);
+          items[items.length - 1].sub = mdRender(sub.map(s => s.slice(baseIndent + 2)).join("\n"));
+          continue;
+        }
+        if (ind < baseIndent) break;
+        items.push({ text: cur.replace(/^\s*([-*+]|\d+[.)])\s+/, "") });
+        i++;
+      }
+      const html = items.map(it => {
+        const task = it.text.match(/^\[([ xX])\]\s+(.*)$/);
+        if (task){
+          const done = task[1].toLowerCase() === "x";
+          return `<li class="task${done ? " done" : ""}"><input type="checkbox" disabled${done ? " checked" : ""}>${mdInline(task[2])}${it.sub || ""}</li>`;
+        }
+        return `<li>${mdInline(it.text)}${it.sub || ""}</li>`;
+      }).join("");
+      out.push(ordered ? `<ol>${html}</ol>` : `<ul>${html}</ul>`);
+      continue;
+    }
+
+    /* párrafo */
+    const buf = [];
+    while (i < lines.length && lines[i].trim() &&
+           !/^\s*(#{1,6}\s|>|```|([-*+]|\d+[.)])\s)/.test(lines[i]) &&
+           !/^\s*([-*_])\s*\1\s*\1[\s\-*_]*$/.test(lines[i])) buf.push(lines[i++]);
+    if (buf.length) out.push(`<p>${mdInline(buf.join("\n")).replace(/\n/g, "<br>")}</p>`);
+  }
+  return out.join("\n");
+}
+
+/* resuelve los <img data-img> contra los blobs de IndexedDB */
+async function hydrateImages(root){
+  await Promise.all($$("img[data-img]", root).map(async el => {
+    const url = await imageURL(el.dataset.img);
+    if (url){ el.src = url; el.onclick = () => openLightbox(url); }
+    else el.replaceWith(Object.assign(document.createElement("p"),
+      { className: "empty", style: "padding:20px", textContent: "· foto no disponible ·" }));
+  }));
+}
+
+function excerptOf(body){
+  return String(body || "")
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/!\[\[[\w-]+\]\]/g, "📷 ")
+    .replace(/[#>*_`~\-|=]/g, " ")
+    .replace(/\s+/g, " ").trim();
+}
+
+/* ============================================================
+   4 · CRUD
+   ============================================================ */
+async function saveSubject(s){
+  s.updated_at = now(); s.dirty = 1;
+  const i = S.subjects.findIndex(x => x.id === s.id);
+  if (i >= 0) S.subjects[i] = s; else S.subjects.push(s);
+  await idbPut("subjects", s);
+  queueSync();
+  return s;
+}
+async function saveNote(n){
+  n.updated_at = now(); n.dirty = 1;
+  const i = S.notes.findIndex(x => x.id === n.id);
+  if (i >= 0) S.notes[i] = n; else S.notes.push(n);
+  await idbPut("notes", n);
+  queueSync();
+  return n;
+}
+async function trashNote(id){
+  const n = noteById(id);
+  if (!n) return;
+  n.deleted = 1;
+  await saveNote(n);
+}
+async function trashSubject(id){
+  const s = subjById(id);
+  if (!s) return;
+  s.deleted = 1;
+  await saveSubject(s);
+  for (const n of liveNotes(id)){ n.deleted = 1; await saveNote(n); }
+}
+
+/* ============================================================
+   5 · fotos del pizarrón
+   ============================================================ */
+const MAX_EDGE = 1600, JPEG_Q = 0.72;
+
+function shrink(file){
+  return new Promise((res, rej) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width: w, height: h } = img;
+      const scale = Math.min(1, MAX_EDGE / Math.max(w, h));
+      w = Math.round(w * scale); h = Math.round(h * scale);
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      const ctx = c.getContext("2d");
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, 0, 0, w, h);
+      c.toBlob(b => b ? res(b) : rej(new Error("no se pudo comprimir")), "image/jpeg", JPEG_Q);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("imagen ilegible")); };
+    img.src = url;
+  });
+}
+
+async function attachShots(files){
+  const note = noteById(S.noteId);
+  if (!note) return;
+  let added = 0;
+  for (const f of files){
+    if (!f.type.startsWith("image/")) continue;
+    try{
+      const blob = await shrink(f);
+      const rec = { id: uid(), note_id: note.id, blob, updated_at: now(), dirty: 1 };
+      await idbPut("images", rec);
+      S.images.push({ id: rec.id, note_id: rec.note_id, updated_at: rec.updated_at, dirty: 1 });
+      const ta = $("#edBody");
+      const token = `\n\n![[${rec.id}]]\n\n`;
+      const pos = ta.selectionStart;
+      ta.value = ta.value.slice(0, pos) + token + ta.value.slice(pos);
+      ta.selectionStart = ta.selectionEnd = pos + token.length;
+      added++;
+    }catch(e){ console.warn(e); }
+  }
+  if (added){
+    await flushEditor();
+    renderShots();
+    toast(added === 1 ? "Foto agregada" : `${added} fotos agregadas`);
+  } else toast("No se pudo leer la imagen");
+}
+
+async function dropShot(id){
+  const rec = await idbGet("images", id);
+  if (rec){ rec.deleted = 1; rec.blob = null; rec.dirty = 1; rec.updated_at = now(); await idbPut("images", rec); }
+  const m = S.images.find(x => x.id === id);
+  if (m){ m.deleted = 1; m.dirty = 1; }
+  if (S.urlCache.has(id)){ URL.revokeObjectURL(S.urlCache.get(id)); S.urlCache.delete(id); }
+  const ta = $("#edBody");
+  ta.value = ta.value.replace(new RegExp(`\\n*!\\[\\[${id}\\]\\]\\n*`, "g"), "\n\n");
+  await flushEditor();
+  renderShots();
+  queueSync();
+}
+
+function openLightbox(url){
+  $("#lightboxImg").src = url;
+  $("#lightbox").classList.add("on");
+}
+
+/* ============================================================
+   6 · render
+   ============================================================ */
+function show(view){
+  S.view = view;
+  $$(".view").forEach(v => v.classList.remove("active"));
+  $("#v" + view[0].toUpperCase() + view.slice(1)).classList.add("active");
+  window.scrollTo(0, 0);
+}
+
+const EMPTY = (icon, title, sub) => `
+  <div class="empty">
+    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">${icon}</svg>
+    <p>${esc(title)}</p><span>${esc(sub)}</span>
+  </div>`;
+
+const ICO_BOOK = `<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H19v3H6.5A2.5 2.5 0 0 1 4 20.5z"/>`;
+const ICO_NOTE = `<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>`;
+const ICO_FIND = `<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>`;
+
+function renderHome(){
+  const subs = liveSubjects();
+  const body = $("#homeBody");
+  if (!subs.length){
+    body.innerHTML = EMPTY(ICO_BOOK, "Todavía no hay materias",
+      "Tocá el + para crear la primera. Una por cada cátedra.");
+    return;
+  }
+  const total = liveNotes().length;
+  body.innerHTML = `
+    <div class="sect"><h2>Materias</h2><span class="hint">${subs.length} · ${total} apunte${total === 1 ? "" : "s"}</span></div>
+    <div class="subject-grid">${subs.map(s => {
+      const ns = liveNotes(s.id);
+      const last = ns.length ? sortNotes(ns)[0].updated_at : null;
+      return `<button class="subject" data-subject="${s.id}" style="${hueVars(s.hue)}">
+        <span class="stripe"></span>
+        <span class="body">
+          <h3>${esc(s.name)}</h3>
+          <span class="meta">${ns.length ? "Últ. edición " + relTime(last) : "Sin apuntes todavía"}</span>
+        </span>
+        <span class="count">${ns.length}</span>
+      </button>`;
+    }).join("")}</div>`;
+}
+
+function noteRow(n, showSubject, q){
+  const s = subjById(n.subject_id);
+  const hue = s ? s.hue : 210;
+  const ex = excerptOf(n.body);
+  const hi = txt => {
+    if (!q) return esc(txt);
+    const f = fold(txt), fq = fold(q);
+    let out = "", at = 0, k;
+    while ((k = f.indexOf(fq, at)) !== -1){
+      out += esc(txt.slice(at, k)) + "<mark>" + esc(txt.slice(k, k + q.length)) + "</mark>";
+      at = k + q.length;
+    }
+    return out + esc(txt.slice(at));
+  };
+  let snip = ex.slice(0, 150);
+  if (q){
+    const k = fold(ex).indexOf(fold(q));
+    if (k > 60) snip = "…" + ex.slice(k - 50, k + 110);
+  }
+  const shots = S.images.filter(i => i.note_id === n.id && !i.deleted).length;
+  return `<button class="note" data-note="${n.id}" style="${hueVars(hue)}">
+    <span class="row">
+      <h4>${n.pinned ? '<span class="pin">◆</span> ' : ""}${hi(n.title || "Sin título")}</h4>
+      <span class="date">${relTime(n.updated_at)}</span>
+    </span>
+    ${snip ? `<span class="excerpt">${hi(snip)}</span>` : ""}
+    ${(showSubject && s) || shots ? `<span class="tagline">
+      ${showSubject && s ? `<span class="chip">${esc(s.name)}</span>` : ""}
+      ${shots ? `<span class="chip plain">📷 ${shots}</span>` : ""}
+    </span>` : ""}
+  </button>`;
+}
+
+function renderSubject(){
+  const s = subjById(S.subjectId);
+  if (!s) return show("home");
+  $("#subjName").textContent = s.name;
+  $("#vSubject").style.cssText = hueVars(s.hue);
+
+  const q = $("#qSubject").value.trim();
+  let ns = sortNotes(liveNotes(s.id));
+  if (q){
+    const fq = fold(q);
+    ns = ns.filter(n => fold(n.title).includes(fq) || fold(n.body).includes(fq));
+  }
+  $("#subjHint").textContent = `${ns.length} apunte${ns.length === 1 ? "" : "s"}`;
+  $("#subjBody").innerHTML = ns.length
+    ? `<div class="note-list">${ns.map(n => noteRow(n, false, q)).join("")}</div>`
+    : (q ? EMPTY(ICO_FIND, "Nada por acá", `Ningún apunte de ${s.name} dice “${q}”.`)
+         : EMPTY(ICO_NOTE, "Materia vacía", "Tocá el + para escribir el primer apunte."));
+}
+
+function renderSearch(){
+  const q = S.query.trim();
+  $("#searchTitle").textContent = `“${q}”`;
+  const fq = fold(q);
+  const hits = sortNotes(liveNotes().filter(n => fold(n.title).includes(fq) || fold(n.body).includes(fq)));
+  $("#searchHint").textContent = `${hits.length} resultado${hits.length === 1 ? "" : "s"}`;
+  $("#searchBody").innerHTML = hits.length
+    ? `<div class="note-list">${hits.map(n => noteRow(n, true, q)).join("")}</div>`
+    : EMPTY(ICO_FIND, "Sin resultados", "Probá con otra palabra, o menos letras.");
+}
+
+async function renderShots(){
+  const strip = $("#edShots");
+  const mine = S.images.filter(i => i.note_id === S.noteId && !i.deleted);
+  strip.hidden = !mine.length;
+  if (!mine.length){ strip.innerHTML = ""; return; }
+  strip.innerHTML = mine.map(i => `<div class="shot" data-shot="${i.id}"><img alt="Foto adjunta"><button class="x" data-drop="${i.id}" aria-label="Quitar foto">×</button></div>`).join("");
+  await Promise.all(mine.map(async i => {
+    const url = await imageURL(i.id);
+    const el = $(`[data-shot="${i.id}"] img`, strip);
+    if (el && url){ el.src = url; el.onclick = () => openLightbox(url); }
+  }));
+}
+
+async function renderPreview(){
+  const el = $("#edPreview");
+  const src = $("#edBody").value;
+  el.innerHTML = src.trim() ? mdRender(src)
+    : `<p style="color:var(--faint)">Nada escrito todavía.</p>`;
+  await hydrateImages(el);
+}
+
+function renderEditor(){
+  const n = noteById(S.noteId);
+  if (!n) return show("home");
+  const s = subjById(n.subject_id);
+  $("#vEdit").style.cssText = s ? hueVars(s.hue) : "";
+  $("#edBackLabel").textContent = s ? s.name : "Volver";
+  $("#edTitle").value = n.title || "";
+  $("#edBody").value = n.body || "";
+  setPane(S.pane);
+  renderShots();
+  updateMeta();
+  autoGrow();
+}
+
+function updateMeta(){
+  const n = noteById(S.noteId);
+  if (!n) return;
+  const words = ($("#edBody").value.trim().match(/\S+/g) || []).length;
+  $("#edMeta").textContent = `${words} palabra${words === 1 ? "" : "s"} · ${S.dirty ? "guardando…" : relTime(n.updated_at)}`;
+}
+
+function autoGrow(){
+  const ta = $("#edBody");
+  ta.style.height = "auto";
+  ta.style.height = Math.max(ta.scrollHeight, window.innerHeight * 0.55) + "px";
+}
+
+function setPane(p){
+  S.pane = p;
+  $$("#edSeg button").forEach(b => b.classList.toggle("on", b.dataset.pane === p));
+  $("#paneWrite").classList.toggle("on", p === "write");
+  $("#paneRead").classList.toggle("on", p === "read");
+  if (p === "read") renderPreview();
+}
+
+function applySplit(){
+  $("#edPanes").classList.toggle("split", window.innerWidth >= 1000);
+  if (window.innerWidth >= 1000) renderPreview();
+}
+
+/* ============================================================
+   7 · autoguardado
+   ============================================================ */
+function markDirty(){
+  S.dirty = true;
+  updateMeta();
+  clearTimeout(S.saveTimer);
+  S.saveTimer = setTimeout(flushEditor, 700);
+}
+async function flushEditor(){
+  clearTimeout(S.saveTimer);
+  const n = noteById(S.noteId);
+  if (!n) return;
+  const t = $("#edTitle").value, b = $("#edBody").value;
+  if (n.title === t && n.body === b && !S.dirty) return;
+  n.title = t; n.body = b;
+  await saveNote(n);
+  S.dirty = false;
+  updateMeta();
+}
+
+/* ============================================================
+   8 · hojas / diálogos
+   ============================================================ */
+function sheet(html){
+  $("#sheet").innerHTML = html;
+  $("#scrim").classList.add("on");
+}
+function closeSheet(){ $("#scrim").classList.remove("on"); }
+
+function subjectSheet(existing){
+  const cur = existing || { name: "", hue: HUES[liveSubjects().length % HUES.length] };
+  sheet(`
+    <h3>${existing ? "Editar materia" : "Nueva materia"}</h3>
+    <div class="field">
+      <label for="sfName">Nombre</label>
+      <input id="sfName" value="${esc(cur.name)}" placeholder="Análisis Matemático II" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Color</label>
+      <div class="swatches">${HUES.map(h =>
+        `<button class="sw${h === cur.hue ? " on" : ""}" data-hue="${h}" style="background:${hueCss(h)}" aria-label="Color ${h}"></button>`).join("")}</div>
+    </div>
+    <div class="btn-row" style="margin-top:18px">
+      <button class="btn" id="sfSave" style="flex:1">Guardar</button>
+      <button class="btn ghost" data-close>Cancelar</button>
+    </div>`);
+
+  let hue = cur.hue;
+  $$("#sheet .sw").forEach(b => b.onclick = () => {
+    hue = +b.dataset.hue;
+    $$("#sheet .sw").forEach(x => x.classList.toggle("on", x === b));
+  });
+  const input = $("#sfName");
+  input.focus();
+  const commit = async () => {
+    const name = input.value.trim();
+    if (!name) return toast("Ponele un nombre");
+    if (existing){
+      existing.name = name; existing.hue = hue;
+      await saveSubject(existing);
+      renderSubject();
+    } else {
+      const s = { id: uid(), name, hue, created_at: now() };
+      await saveSubject(s);
+      S.subjectId = s.id;
+      show("subject"); renderSubject();
+    }
+    renderHome();
+    closeSheet();
+  };
+  $("#sfSave").onclick = commit;
+  input.onkeydown = e => { if (e.key === "Enter") commit(); };
+}
+
+function confirmSheet(title, body, label, fn){
+  sheet(`
+    <h3>${esc(title)}</h3>
+    <p style="margin:0 0 20px; color:var(--soft); font-size:14.5px; line-height:1.5">${esc(body)}</p>
+    <div class="btn-row">
+      <button class="btn danger" id="cfGo" style="flex:1">${esc(label)}</button>
+      <button class="btn ghost" data-close>Cancelar</button>
+    </div>`);
+  $("#cfGo").onclick = async () => { closeSheet(); await fn(); };
+}
+
+/* ============================================================
+   9 · sincronización  (Supabase · REST, sin SDK)
+   ============================================================ */
+const SYNC = { url: "", key: "", token: "", refresh: "", uid: "", email: "", busy: false, pending: false, err: "" };
+const TABLES = { subjects: "subjects", notes: "notes" };
+
+async function loadSync(){
+  const c = (await metaGet("sync")) || {};
+  Object.assign(SYNC, c);
+}
+const persistSync = () => metaSet("sync", {
+  url: SYNC.url, key: SYNC.key, token: SYNC.token,
+  refresh: SYNC.refresh, uid: SYNC.uid, email: SYNC.email
+});
+const syncOn = () => !!(SYNC.url && SYNC.key && SYNC.token);
+
+async function sbFetch(path, opts, retry){
+  const o = opts || {};
+  const r = await fetch(SYNC.url.replace(/\/$/, "") + path, {
+    method: o.method || "GET",
+    headers: Object.assign({
+      apikey: SYNC.key,
+      Authorization: "Bearer " + (o.anon ? SYNC.key : SYNC.token || SYNC.key)
+    }, o.headers || {}),
+    body: o.body
+  });
+  if (r.status === 401 && !retry && SYNC.refresh && !o.anon){
+    if (await refreshToken()) return sbFetch(path, opts, true);
+  }
+  return r;
+}
+
+async function refreshToken(){
+  try{
+    const r = await sbFetch("/auth/v1/token?grant_type=refresh_token", {
+      anon: true, method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: SYNC.refresh })
+    });
+    if (!r.ok) return false;
+    const j = await r.json();
+    SYNC.token = j.access_token; SYNC.refresh = j.refresh_token;
+    SYNC.uid = j.user && j.user.id || SYNC.uid;
+    await persistSync();
+    return true;
+  }catch(e){ return false; }
+}
+
+async function signIn(email, pass, mode){
+  const path = mode === "signup" ? "/auth/v1/signup" : "/auth/v1/token?grant_type=password";
+  const r = await sbFetch(path, {
+    anon: true, method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password: pass })
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error_description || j.msg || j.message || "No se pudo entrar");
+  if (!j.access_token) throw new Error("Revisá tu mail y confirmá la cuenta, después iniciá sesión.");
+  SYNC.token = j.access_token; SYNC.refresh = j.refresh_token;
+  SYNC.uid = j.user && j.user.id; SYNC.email = email;
+  await persistSync();
+}
+
+function queueSync(){
+  if (!syncOn()) return;
+  clearTimeout(queueSync._t);
+  queueSync._t = setTimeout(() => runSync(true), 2500);
+}
+
+/* filas locales -> filas remotas (y viceversa) */
+const rowOut = (kind, r) => {
+  const base = { id: r.id, user_id: SYNC.uid, updated_at: r.updated_at, deleted: r.deleted ? 1 : 0 };
+  return kind === "subjects"
+    ? Object.assign(base, { name: r.name, hue: r.hue, created_at: r.created_at || r.updated_at })
+    : Object.assign(base, { subject_id: r.subject_id, title: r.title || "", body: r.body || "",
+                            pinned: r.pinned ? 1 : 0, created_at: r.created_at || r.updated_at });
+};
+
+async function runSync(quiet){
+  if (!syncOn() || SYNC.busy){ SYNC.pending = SYNC.pending || syncOn(); return; }
+  SYNC.busy = true; SYNC.err = "";
+  if (!quiet) renderSettings();
+  try{
+    const since = (await metaGet("last_sync")) || "1970-01-01T00:00:00.000Z";
+
+    /* --- push --- */
+    for (const kind of ["subjects", "notes"]){
+      const dirty = S[kind].filter(r => r.dirty);
+      if (!dirty.length) continue;
+      const r = await sbFetch(`/rest/v1/${TABLES[kind]}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal" },
+        body: JSON.stringify(dirty.map(x => rowOut(kind, x)))
+      });
+      if (!r.ok) throw new Error(`${kind}: ${await r.text()}`);
+      for (const x of dirty){ delete x.dirty; await idbPut(kind, x); }
+    }
+    await pushImages();
+
+    /* --- pull --- */
+    for (const kind of ["subjects", "notes"]){
+      const r = await sbFetch(`/rest/v1/${TABLES[kind]}?updated_at=gt.${encodeURIComponent(since)}&select=*`);
+      if (!r.ok) throw new Error(`${kind}: ${await r.text()}`);
+      for (const row of await r.json()){
+        const local = S[kind].find(x => x.id === row.id);
+        if (local && (local.updated_at || "") >= (row.updated_at || "")) continue;
+        delete row.user_id;
+        const merged = Object.assign({}, local || {}, row);
+        delete merged.dirty;
+        if (local) Object.assign(local, merged); else S[kind].push(merged);
+        await idbPut(kind, merged);
+      }
+    }
+    await pullImages(since);
+
+    await metaSet("last_sync", now());
+    rerenderCurrent();
+    if (!quiet) toast("Sincronizado");
+  }catch(e){
+    SYNC.err = String(e.message || e);
+    if (!quiet) toast("Error al sincronizar");
+    console.warn("sync:", e);
+  }finally{
+    SYNC.busy = false;
+    if (S.view === "settings") renderSettings();
+    if (SYNC.pending){ SYNC.pending = false; setTimeout(() => runSync(true), 800); }
+  }
+}
+
+const BUCKET = "marginalia-img";
+
+async function pushImages(){
+  const dirty = S.images.filter(i => i.dirty);
+  for (const meta of dirty){
+    const rec = await idbGet("images", meta.id);
+    if (!rec) continue;
+    const path = `${SYNC.uid}/${rec.id}.jpg`;
+    if (rec.deleted){
+      await sbFetch(`/storage/v1/object/${BUCKET}/${path}`, { method: "DELETE" }).catch(() => {});
+    } else if (rec.blob && !rec.remote){
+      const r = await sbFetch(`/storage/v1/object/${BUCKET}/${path}`, {
+        method: "POST",
+        headers: { "Content-Type": "image/jpeg", "x-upsert": "true" },
+        body: rec.blob
+      });
+      if (!r.ok) throw new Error("foto: " + await r.text());
+      rec.remote = path;
+    }
+    const r2 = await sbFetch("/rest/v1/images", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify([{ id: rec.id, user_id: SYNC.uid, note_id: rec.note_id,
+                              path: rec.remote || path, deleted: rec.deleted ? 1 : 0,
+                              updated_at: rec.updated_at }])
+    });
+    if (!r2.ok) throw new Error("foto: " + await r2.text());
+    delete rec.dirty;
+    await idbPut("images", rec);
+    delete meta.dirty;
+    meta.remote = rec.remote;
+  }
+}
+
+async function pullImages(since){
+  const r = await sbFetch(`/rest/v1/images?updated_at=gt.${encodeURIComponent(since)}&select=*`);
+  if (!r.ok) throw new Error("fotos: " + await r.text());
+  for (const row of await r.json()){
+    const existing = await idbGet("images", row.id);
+    if (existing && (existing.updated_at || "") >= (row.updated_at || "")) continue;
+    if (row.deleted){
+      if (existing){
+        await idbPut("images", { id: row.id, note_id: row.note_id, deleted: 1, updated_at: row.updated_at, blob: null });
+        const m = S.images.find(x => x.id === row.id);
+        if (m) m.deleted = 1;
+      }
+      continue;
+    }
+    if (existing && existing.blob) continue;   // ya tenemos los bytes
+    const dl = await sbFetch(`/storage/v1/object/${BUCKET}/${row.path}`);
+    if (!dl.ok) continue;
+    const blob = await dl.blob();
+    const rec = { id: row.id, note_id: row.note_id, blob, remote: row.path, updated_at: row.updated_at };
+    await idbPut("images", rec);
+    const m = S.images.find(x => x.id === row.id);
+    if (m) Object.assign(m, { note_id: row.note_id, updated_at: row.updated_at, remote: row.path, deleted: 0 });
+    else S.images.push({ id: row.id, note_id: row.note_id, updated_at: row.updated_at, remote: row.path });
+  }
+}
+
+/* ============================================================
+   10 · ajustes
+   ============================================================ */
+function renderSettings(){
+  $("#verLabel").textContent = VERSION;
+  storageInfo();
+
+  const st = $("#syncStatus"), panel = $("#syncPanel");
+  if (SYNC.busy){
+    st.innerHTML = `<span class="status ok"><span class="dot"></span>Sincronizando…</span>`;
+  } else if (SYNC.err){
+    st.innerHTML = `<span class="status err"><span class="dot"></span>Error</span>`;
+  } else if (syncOn()){
+    st.innerHTML = `<span class="status ok"><span class="dot"></span>Activa · ${esc(SYNC.email || "")}</span>`;
+  } else {
+    st.innerHTML = `<span class="status off"><span class="dot"></span>Sólo en este dispositivo</span>`;
+  }
+
+  if (syncOn()){
+    $("#syncBlurb").textContent = SYNC.err
+      ? SYNC.err.slice(0, 220)
+      : "Los cambios suben solos unos segundos después de que dejás de escribir.";
+    panel.innerHTML = `
+      <div class="btn-row">
+        <button class="btn" id="btnSyncNow">Sincronizar ahora</button>
+        <button class="btn ghost" id="btnSignOut">Cerrar sesión</button>
+      </div>`;
+    $("#btnSyncNow").onclick = () => runSync(false);
+    $("#btnSignOut").onclick = () => confirmSheet(
+      "¿Cerrar sesión?",
+      "Los apuntes se quedan en este dispositivo. Podés volver a entrar cuando quieras.",
+      "Cerrar sesión",
+      async () => {
+        SYNC.token = SYNC.refresh = SYNC.uid = SYNC.email = "";
+        await persistSync(); renderSettings(); toast("Sesión cerrada");
+      });
+    return;
+  }
+
+  panel.innerHTML = `
+    <div class="field">
+      <label for="syUrl">URL del proyecto Supabase</label>
+      <input id="syUrl" value="${esc(SYNC.url)}" placeholder="https://xxxx.supabase.co" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="field">
+      <label for="syKey">Clave pública (anon)</label>
+      <input id="syKey" value="${esc(SYNC.key)}" placeholder="eyJhbGciOi…" autocomplete="off" spellcheck="false">
+      <div class="note-help">Las dos están en Project Settings → API. La anon key es pública por diseño: lo que protege tus datos son las políticas RLS del README.</div>
+    </div>
+    <div class="field">
+      <label for="syMail">Email</label>
+      <input id="syMail" type="email" value="${esc(SYNC.email)}" autocomplete="username" spellcheck="false">
+    </div>
+    <div class="field">
+      <label for="syPass">Contraseña</label>
+      <input id="syPass" type="password" autocomplete="current-password">
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="btnLogin" style="flex:1">Iniciar sesión</button>
+      <button class="btn ghost" id="btnSignup">Crear cuenta</button>
+    </div>`;
+
+  const go = async mode => {
+    const url = $("#syUrl").value.trim(), key = $("#syKey").value.trim();
+    const mail = $("#syMail").value.trim(), pass = $("#syPass").value;
+    if (!url || !key) return toast("Faltan la URL y la clave");
+    if (!mail || !pass) return toast("Faltan el email y la contraseña");
+    SYNC.url = url; SYNC.key = key;
+    const btn = mode === "signup" ? $("#btnSignup") : $("#btnLogin");
+    btn.disabled = true; btn.textContent = "…";
+    try{
+      await signIn(mail, pass, mode);
+      /* la primera vez subimos todo lo que ya existe */
+      for (const k of ["subjects", "notes"]) S[k].forEach(r => r.dirty = 1);
+      S.images.forEach(i => i.dirty = 1);
+      for (const i of S.images){ const rec = await idbGet("images", i.id); if (rec){ rec.dirty = 1; await idbPut("images", rec); } }
+      renderSettings();
+      toast("Conectado");
+      runSync(false);
+    }catch(e){
+      btn.disabled = false;
+      btn.textContent = mode === "signup" ? "Crear cuenta" : "Iniciar sesión";
+      SYNC.err = String(e.message || e);
+      toast(SYNC.err.slice(0, 90));
+    }
+  };
+  $("#btnLogin").onclick = () => go("login");
+  $("#btnSignup").onclick = () => go("signup");
+
+  storageInfo();
+}
+
+async function storageInfo(){
+  const imgs = S.images.filter(i => !i.deleted).length;
+  const trash = S.notes.filter(n => n.deleted).length;
+  let bytes = "";
+  if (navigator.storage && navigator.storage.estimate){
+    const e = await navigator.storage.estimate();
+    if (e.usage) bytes = " · " + (e.usage / 1048576).toFixed(1) + " MB en disco";
+  }
+  $("#storageInfo").textContent =
+    `${liveNotes().length} apuntes · ${imgs} fotos${bytes}. En la papelera: ${trash}.`;
+}
+
+/* ---- export / import ---- */
+const blobToDataURL = b => new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(b); });
+
+async function exportAll(){
+  toast("Armando el archivo…");
+  const imgs = [];
+  for (const meta of S.images.filter(i => !i.deleted)){
+    const rec = await idbGet("images", meta.id);
+    if (rec && rec.blob) imgs.push({ id: rec.id, note_id: rec.note_id, updated_at: rec.updated_at, data: await blobToDataURL(rec.blob) });
+  }
+  const dump = { app: "marginalia", version: VERSION, exported_at: now(),
+                 subjects: S.subjects, notes: S.notes, images: imgs };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(dump)], { type: "application/json" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `marginalia-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+async function importAll(file){
+  let d;
+  try{ d = JSON.parse(await file.text()); }
+  catch(e){ return toast("Ese archivo no se puede leer"); }
+  if (d.app !== "marginalia") return toast("No parece un backup de Marginalia");
+  let added = 0;
+  for (const s of d.subjects || []){
+    const cur = subjById(s.id);
+    if (cur && (cur.updated_at || "") >= (s.updated_at || "")) continue;
+    s.dirty = 1; await idbPut("subjects", s);
+    if (cur) Object.assign(cur, s); else S.subjects.push(s);
+  }
+  for (const n of d.notes || []){
+    const cur = noteById(n.id);
+    if (cur && (cur.updated_at || "") >= (n.updated_at || "")) continue;
+    n.dirty = 1; await idbPut("notes", n);
+    if (cur) Object.assign(cur, n); else S.notes.push(n);
+    added++;
+  }
+  for (const im of d.images || []){
+    if (await idbGet("images", im.id)) continue;
+    const blob = await (await fetch(im.data)).blob();
+    const rec = { id: im.id, note_id: im.note_id, updated_at: im.updated_at, blob, dirty: 1 };
+    await idbPut("images", rec);
+    S.images.push({ id: rec.id, note_id: rec.note_id, updated_at: rec.updated_at, dirty: 1 });
+  }
+  renderHome(); renderSettings(); queueSync();
+  toast(`Importado · ${added} apuntes`);
+}
+
+async function purgeTrash(){
+  for (const n of S.notes.filter(x => x.deleted)){
+    for (const i of S.images.filter(x => x.note_id === n.id)){ await idbDel("images", i.id); }
+    S.images = S.images.filter(x => x.note_id !== n.id);
+    await idbDel("notes", n.id);
+  }
+  S.notes = S.notes.filter(n => !n.deleted);
+  for (const s of S.subjects.filter(x => x.deleted)) await idbDel("subjects", s.id);
+  S.subjects = S.subjects.filter(s => !s.deleted);
+  storageInfo();
+  toast("Papelera vacía");
+}
+
+/* ============================================================
+   11 · eventos
+   ============================================================ */
+function rerenderCurrent(){
+  if (S.view === "home") renderHome();
+  else if (S.view === "subject") renderSubject();
+  else if (S.view === "search") renderSearch();
+  else if (S.view === "settings") renderSettings();
+}
+
+/* delegación global de clics */
+document.addEventListener("click", async e => {
+  const t = e.target;
+
+  const back = t.closest("[data-back]");
+  if (back){ await flushEditor(); show(back.dataset.back); rerenderCurrent(); return; }
+
+  const subj = t.closest("[data-subject]");
+  if (subj){ S.subjectId = subj.dataset.subject; $("#qSubject").value = ""; show("subject"); renderSubject(); return; }
+
+  const note = t.closest("[data-note]");
+  if (note){
+    S.noteId = note.dataset.note;
+    S.subjectId = noteById(S.noteId).subject_id;
+    S.pane = "write";
+    show("edit"); renderEditor(); applySplit();
+    return;
+  }
+
+  const drop = t.closest("[data-drop]");
+  if (drop){ e.stopPropagation(); dropShot(drop.dataset.drop); return; }
+
+  if (t.closest("[data-close]")) return closeSheet();
+  if (t === $("#scrim")) return closeSheet();
+  if (t.closest("#lightbox")) return $("#lightbox").classList.remove("on");
+});
+
+$("#btnTheme").onclick = async () => {
+  const cur = document.documentElement.dataset.theme;
+  const sysDark = matchMedia("(prefers-color-scheme:dark)").matches;
+  const next = cur ? (cur === "dark" ? "light" : "dark") : (sysDark ? "light" : "dark");
+  document.documentElement.dataset.theme = next;
+  await metaSet("theme", next);
+  $('meta[name="theme-color"]').content = next === "dark" ? "#15171A" : "#1F5E63";
+};
+
+$("#btnSettings").onclick = () => { show("settings"); renderSettings(); };
+$("#fabSubject").onclick = () => subjectSheet(null);
+
+$("#fabNote").onclick = async () => {
+  const n = { id: uid(), subject_id: S.subjectId, title: "", body: "", created_at: now() };
+  await saveNote(n);
+  S.noteId = n.id; S.pane = "write";
+  show("edit"); renderEditor(); applySplit();
+  $("#edTitle").focus();
+};
+
+$("#btnSubjMenu").onclick = () => {
+  const s = subjById(S.subjectId);
+  if (!s) return;
+  sheet(`
+    <h3>${esc(s.name)}</h3>
+    <button class="menu-item" id="miEdit">
+      <svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+      Cambiar nombre o color
+    </button>
+    <button class="menu-item danger" id="miDel">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>
+      Eliminar materia
+    </button>`);
+  $("#miEdit").onclick = () => subjectSheet(s);
+  $("#miDel").onclick = () => confirmSheet(
+    `¿Eliminar ${s.name}?`,
+    `Se van también sus ${liveNotes(s.id).length} apuntes. Quedan en la papelera hasta que la vacíes desde Ajustes.`,
+    "Eliminar",
+    async () => { await trashSubject(s.id); show("home"); renderHome(); toast("Materia eliminada"); });
+};
+
+$("#btnNoteMenu").onclick = () => {
+  const n = noteById(S.noteId);
+  if (!n) return;
+  const others = liveSubjects().filter(s => s.id !== n.subject_id);
+  sheet(`
+    <h3>Apunte</h3>
+    <button class="menu-item" id="miPin">
+      <svg viewBox="0 0 24 24"><path d="M12 2l2.5 6.5L21 9.5l-5 4.5 1.5 7L12 17.5 6.5 21 8 14 3 9.5l6.5-1z"/></svg>
+      ${n.pinned ? "Quitar de arriba" : "Fijar arriba"}
+    </button>
+    ${others.length ? `<button class="menu-item" id="miMove">
+      <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      Mover a otra materia
+    </button>` : ""}
+    <button class="menu-item" id="miCopy">
+      <svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+      Copiar texto
+    </button>
+    <button class="menu-item danger" id="miDelNote">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>
+      Eliminar apunte
+    </button>`);
+
+  $("#miPin").onclick = async () => { n.pinned = n.pinned ? 0 : 1; await saveNote(n); closeSheet(); toast(n.pinned ? "Fijado" : "Ya no está fijado"); };
+  $("#miCopy").onclick = async () => {
+    try{ await navigator.clipboard.writeText(`# ${n.title}\n\n${n.body}`); toast("Copiado"); }
+    catch(e){ toast("No se pudo copiar"); }
+    closeSheet();
+  };
+  const mv = $("#miMove");
+  if (mv) mv.onclick = () => sheet(`
+    <h3>Mover a…</h3>
+    ${others.map(s => `<button class="menu-item" data-move="${s.id}">
+      <span style="width:11px;height:11px;border-radius:4px;background:${hueCss(s.hue)};flex:0 0 11px"></span>
+      ${esc(s.name)}
+    </button>`).join("")}`);
+  $("#miDelNote").onclick = () => confirmSheet(
+    "¿Eliminar este apunte?",
+    "Queda en la papelera hasta que la vacíes desde Ajustes.",
+    "Eliminar",
+    async () => {
+      await trashNote(n.id);
+      show("subject"); renderSubject(); renderHome();
+      toast("Apunte eliminado");
+    });
+};
+
+document.addEventListener("click", async e => {
+  const mv = e.target.closest("[data-move]");
+  if (!mv) return;
+  const n = noteById(S.noteId);
+  n.subject_id = mv.dataset.move;
+  await saveNote(n);
+  S.subjectId = n.subject_id;
+  closeSheet(); renderEditor(); renderHome();
+  toast("Movido a " + subjById(n.subject_id).name);
+});
+
+/* --- editor --- */
+$("#edBack").onclick = async () => { await flushEditor(); show("subject"); renderSubject(); renderHome(); };
+$("#edTitle").oninput = markDirty;
+$("#edBody").oninput = () => { markDirty(); autoGrow(); if ($("#edPanes").classList.contains("split")) renderPreview(); };
+$$("#edSeg button").forEach(b => b.onclick = () => setPane(b.dataset.pane));
+$("#btnShot").onclick = () => $("#fileShot").click();
+$("#fileShot").onchange = async e => { await attachShots(Array.from(e.target.files || [])); e.target.value = ""; };
+
+/* --- barra de markdown --- */
+function wrapSel(before, after, linePrefix){
+  const ta = $("#edBody");
+  const { selectionStart: a, selectionEnd: b, value: v } = ta;
+  if (linePrefix){
+    const ls = v.lastIndexOf("\n", a - 1) + 1;
+    const has = v.slice(ls).startsWith(linePrefix);
+    ta.value = v.slice(0, ls) + (has ? "" : linePrefix) + v.slice(ls + (has ? linePrefix.length : 0));
+    ta.selectionStart = ta.selectionEnd = a + (has ? -linePrefix.length : linePrefix.length);
+  } else {
+    const sel = v.slice(a, b) || "texto";
+    ta.value = v.slice(0, a) + before + sel + after + v.slice(b);
+    ta.selectionStart = a + before.length;
+    ta.selectionEnd = a + before.length + sel.length;
+  }
+  ta.focus();
+  markDirty(); autoGrow();
+  if ($("#edPanes").classList.contains("split")) renderPreview();
+}
+$$("[data-md]").forEach(b => b.onclick = () => ({
+  bold:   () => wrapSel("**", "**"),
+  italic: () => wrapSel("*", "*"),
+  code:   () => wrapSel("`", "`"),
+  head:   () => wrapSel(null, null, "## "),
+  list:   () => wrapSel(null, null, "- ")
+})[b.dataset.md]());
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape"){
+    if ($("#lightbox").classList.contains("on")) return $("#lightbox").classList.remove("on");
+    if ($("#scrim").classList.contains("on")) return closeSheet();
+  }
+  if (S.view !== "edit" || !(e.ctrlKey || e.metaKey)) return;
+  const k = e.key.toLowerCase();
+  if (k === "b"){ e.preventDefault(); wrapSel("**", "**"); }
+  else if (k === "i"){ e.preventDefault(); wrapSel("*", "*"); }
+  else if (k === "s"){ e.preventDefault(); flushEditor().then(() => toast("Guardado")); }
+  else if (k === "e"){ e.preventDefault(); setPane(S.pane === "write" ? "read" : "write"); }
+});
+
+/* tab dentro del textarea inserta espacios, no salta de campo */
+$("#edBody").addEventListener("keydown", e => {
+  if (e.key !== "Tab" || e.shiftKey) return;
+  e.preventDefault();
+  const ta = e.target, p = ta.selectionStart;
+  ta.value = ta.value.slice(0, p) + "  " + ta.value.slice(ta.selectionEnd);
+  ta.selectionStart = ta.selectionEnd = p + 2;
+  markDirty();
+});
+
+/* pegar una imagen desde el portapapeles */
+$("#edBody").addEventListener("paste", e => {
+  const files = Array.from(e.clipboardData.files || []).filter(f => f.type.startsWith("image/"));
+  if (!files.length) return;
+  e.preventDefault();
+  attachShots(files);
+});
+
+/* --- búsqueda --- */
+let qTimer;
+$("#qHome").addEventListener("input", e => {
+  clearTimeout(qTimer);
+  const v = e.target.value;
+  qTimer = setTimeout(() => {
+    S.query = v;
+    if (v.trim().length >= 2){ show("search"); renderSearch(); }
+    else if (S.view === "search"){ show("home"); renderHome(); }
+  }, 180);
+});
+$("#qSubject").addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(renderSubject, 160); });
+
+/* --- ajustes --- */
+$("#btnExport").onclick = exportAll;
+$("#btnImport").onclick = () => $("#fileImport").click();
+$("#fileImport").onchange = async e => { if (e.target.files[0]) await importAll(e.target.files[0]); e.target.value = ""; };
+$("#btnPurge").onclick = () => confirmSheet(
+  "¿Vaciar la papelera?",
+  "Se borran definitivamente los apuntes y las fotos eliminadas. Esto no se puede deshacer.",
+  "Vaciar", purgeTrash);
+
+/* --- ciclo de vida --- */
+window.addEventListener("resize", applySplit);
+window.addEventListener("beforeunload", () => {
+  const n = noteById(S.noteId);
+  if (S.dirty && n){ n.title = $("#edTitle").value; n.body = $("#edBody").value; n.updated_at = now(); n.dirty = 1; idbPut("notes", n); }
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) flushEditor();
+  else if (syncOn()) runSync(true);
+});
+window.addEventListener("online", () => { if (syncOn()) runSync(true); });
+
+/* ============================================================
+   12 · arranque
+   ============================================================ */
+(async function boot(){
+  const theme = await metaGet("theme");
+  if (theme){
+    document.documentElement.dataset.theme = theme;
+    $('meta[name="theme-color"]').content = theme === "dark" ? "#15171A" : "#1F5E63";
+  }
+  await loadAll();
+  await loadSync();
+
+  /* primera vez: dejamos un apunte de muestra que explica el markdown */
+  if (!S.subjects.length && !(await metaGet("seeded"))){
+    const s = { id: uid(), name: "Ejemplo", hue: HUES[0], created_at: now(), updated_at: now() };
+    await idbPut("subjects", s); S.subjects.push(s);
+    const n = {
+      id: uid(), subject_id: s.id, title: "Cómo se escribe acá",
+      created_at: now(), updated_at: now(),
+      body: [
+        "Escribís texto normal y sale texto normal. Cuando querés estructura, usás **markdown**:",
+        "",
+        "## Un subtítulo",
+        "### Uno más chico",
+        "",
+        "- Listas con guion",
+        "- Todas las que quieras",
+        "  - Y anidadas con dos espacios",
+        "",
+        "1. También numeradas",
+        "2. Se ordenan solas",
+        "",
+        "- [ ] Tareas pendientes",
+        "- [x] Y tareas hechas",
+        "",
+        "**Negrita**, *cursiva*, ~~tachado~~, ==resaltado== y `código`.",
+        "",
+        "> Las citas van con un signo mayor. Sirven para copiar lo que dictó el profe textual.",
+        "",
+        "| Concepto | Definición |",
+        "| --- | --- |",
+        "| Límite | A dónde tiende |",
+        "| Derivada | Cómo cambia |",
+        "",
+        "```",
+        "for i in range(10):",
+        "    print(i)",
+        "```",
+        "",
+        "Con el botón de la cámara sacás una foto del pizarrón y se pega acá adentro.",
+        "",
+        "Podés borrar esta materia entera desde el menú de arriba a la derecha."
+      ].join("\n")
+    };
+    await idbPut("notes", n); S.notes.push(n);
+    await metaSet("seeded", 1);
+  }
+
+  renderHome();
+  if (syncOn()) runSync(true);
+
+  if ("serviceWorker" in navigator){
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>
