@@ -120,8 +120,12 @@ create policy "own files delete" on storage.objects for delete
 
 ### 4. Conectar la app
 
-*Project Settings → API* tiene los dos valores. En Marginalia: ⚙️ → pegar **Project
-URL** y **anon public key** → email y contraseña → **Crear cuenta**.
+*Project Settings → API Keys* tiene los dos valores. En Marginalia: ⚙️ → pegar
+**Project URL** y la **clave pública** (`sb_publishable_…` en los proyectos nuevos,
+o la vieja `anon` que arranca con `eyJ…`) → email y contraseña → **Crear cuenta**.
+
+⚠️ La otra clave — *secret* / `service_role` — **nunca** va acá: saltea RLS y
+quedaría a la vista de cualquiera que abra la app.
 
 Supabase manda un mail de confirmación. Confirmás una vez, volvés y hacés *Iniciar
 sesión*. (Si preferís saltear ese paso: *Authentication → Providers → Email* →

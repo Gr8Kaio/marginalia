@@ -558,7 +558,7 @@
 
 <script>
 "use strict";
-const VERSION = "v1.0.0";
+const VERSION = "v1.0.1";
 
 /* ============================================================
    0 · utilidades
@@ -1199,12 +1199,14 @@ const syncOn = () => !!(SYNC.url && SYNC.key && SYNC.token);
 
 async function sbFetch(path, opts, retry){
   const o = opts || {};
+  /* La apikey sola alcanza para el rol anon. El Authorization se manda sólo con
+     un token de sesión real: las claves nuevas (sb_publishable_…) no son JWT y
+     Supabase rechaza el pedido si las ve ahí. */
+  const headers = Object.assign({ apikey: SYNC.key }, o.headers || {});
+  if (!o.anon && SYNC.token) headers.Authorization = "Bearer " + SYNC.token;
   const r = await fetch(SYNC.url.replace(/\/$/, "") + path, {
     method: o.method || "GET",
-    headers: Object.assign({
-      apikey: SYNC.key,
-      Authorization: "Bearer " + (o.anon ? SYNC.key : SYNC.token || SYNC.key)
-    }, o.headers || {}),
+    headers,
     body: o.body
   });
   if (r.status === 401 && !retry && SYNC.refresh && !o.anon){
@@ -1415,9 +1417,9 @@ function renderSettings(){
       <input id="syUrl" value="${esc(SYNC.url)}" placeholder="https://xxxx.supabase.co" autocomplete="off" spellcheck="false">
     </div>
     <div class="field">
-      <label for="syKey">Clave pública (anon)</label>
-      <input id="syKey" value="${esc(SYNC.key)}" placeholder="eyJhbGciOi…" autocomplete="off" spellcheck="false">
-      <div class="note-help">Las dos están en Project Settings → API. La anon key es pública por diseño: lo que protege tus datos son las políticas RLS del README.</div>
+      <label for="syKey">Clave pública</label>
+      <input id="syKey" value="${esc(SYNC.key)}" placeholder="sb_publishable_… o eyJhbGciOi…" autocomplete="off" spellcheck="false">
+      <div class="note-help">Las dos están en Project Settings → API Keys. Sirve tanto la publishable nueva como la anon vieja. Es pública por diseño: lo que protege tus datos son las políticas RLS del README.</div>
     </div>
     <div class="field">
       <label for="syMail">Email</label>
