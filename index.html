@@ -558,7 +558,7 @@
 
 <script>
 "use strict";
-const VERSION = "v1.0.1";
+const VERSION = "v1.1.0";
 
 /* ============================================================
    0 · utilidades
@@ -1215,6 +1215,25 @@ async function sbFetch(path, opts, retry){
   return r;
 }
 
+/* Marca de agua del pull.
+   No sirve el reloj local: las filas viajan con el updated_at de cuando se
+   escribieron — que es lo correcto para resolver conflictos — así que un apunte
+   de ayer que el otro dispositivo recién sube hoy queda por detrás de cualquier
+   marca tomada con new Date(), y no se baja nunca más. pushed_at lo pone el
+   servidor en cada escritura, y la marca sale del header Date de su respuesta,
+   con 60 s de margen para cubrir relojes desfasados y escrituras en vuelo.
+   Volver a bajar una fila no cuesta nada: el merge la descarta por updated_at. */
+const OVERLAP_MS = 60000;
+let pullStamp = "";
+function stampFrom(r){
+  if (pullStamp) return;
+  const d = r.headers.get("Date");
+  if (d){
+    const t = new Date(d).getTime();
+    if (!isNaN(t)) pullStamp = new Date(t - OVERLAP_MS).toISOString();
+  }
+}
+
 async function refreshToken(){
   try{
     const r = await sbFetch("/auth/v1/token?grant_type=refresh_token", {
@@ -1266,7 +1285,10 @@ async function runSync(quiet){
   SYNC.busy = true; SYNC.err = "";
   if (!quiet) renderSettings();
   try{
-    const since = (await metaGet("last_sync")) || "1970-01-01T00:00:00.000Z";
+    /* clave nueva a propósito: los dispositivos que venían con last_sync arrancan
+       de cero una vez y se ponen al día con lo que se habían perdido */
+    const since = (await metaGet("last_pull")) || "1970-01-01T00:00:00.000Z";
+    pullStamp = "";
 
     /* --- push --- */
     for (const kind of ["subjects", "notes"]){
@@ -1284,12 +1306,13 @@ async function runSync(quiet){
 
     /* --- pull --- */
     for (const kind of ["subjects", "notes"]){
-      const r = await sbFetch(`/rest/v1/${TABLES[kind]}?updated_at=gt.${encodeURIComponent(since)}&select=*`);
+      const r = await sbFetch(`/rest/v1/${TABLES[kind]}?pushed_at=gte.${encodeURIComponent(since)}&select=*`);
       if (!r.ok) throw new Error(`${kind}: ${await r.text()}`);
+      stampFrom(r);
       for (const row of await r.json()){
         const local = S[kind].find(x => x.id === row.id);
         if (local && (local.updated_at || "") >= (row.updated_at || "")) continue;
-        delete row.user_id;
+        delete row.user_id; delete row.pushed_at;
         const merged = Object.assign({}, local || {}, row);
         delete merged.dirty;
         if (local) Object.assign(local, merged); else S[kind].push(merged);
@@ -1298,7 +1321,7 @@ async function runSync(quiet){
     }
     await pullImages(since);
 
-    await metaSet("last_sync", now());
+    if (pullStamp) await metaSet("last_pull", pullStamp);
     rerenderCurrent();
     if (!quiet) toast("Sincronizado");
   }catch(e){
@@ -1347,8 +1370,9 @@ async function pushImages(){
 }
 
 async function pullImages(since){
-  const r = await sbFetch(`/rest/v1/images?updated_at=gt.${encodeURIComponent(since)}&select=*`);
+  const r = await sbFetch(`/rest/v1/images?pushed_at=gte.${encodeURIComponent(since)}&select=*`);
   if (!r.ok) throw new Error("fotos: " + await r.text());
+  stampFrom(r);
   for (const row of await r.json()){
     const existing = await idbGet("images", row.id);
     if (existing && (existing.updated_at || "") >= (row.updated_at || "")) continue;

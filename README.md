@@ -84,9 +84,29 @@ create table images (
   updated_at timestamptz not null default now()
 );
 
-create index on notes (user_id, updated_at);
-create index on subjects (user_id, updated_at);
-create index on images (user_id, updated_at);
+-- updated_at es la hora del dispositivo que escribió (resuelve conflictos).
+-- pushed_at es la hora del servidor al recibir la fila (marca de agua del pull).
+-- Tienen que ser dos columnas distintas: un apunte de ayer que recién hoy sube
+-- desde el celu llega con updated_at viejo, y si el pull filtrara por eso el
+-- otro dispositivo no lo bajaría nunca.
+alter table subjects add column pushed_at timestamptz not null default now();
+alter table notes    add column pushed_at timestamptz not null default now();
+alter table images   add column pushed_at timestamptz not null default now();
+
+create or replace function touch_pushed_at() returns trigger as $$
+begin new.pushed_at = now(); return new; end;
+$$ language plpgsql;
+
+create trigger pushed_at_subjects before insert or update on subjects
+  for each row execute function touch_pushed_at();
+create trigger pushed_at_notes before insert or update on notes
+  for each row execute function touch_pushed_at();
+create trigger pushed_at_images before insert or update on images
+  for each row execute function touch_pushed_at();
+
+create index on notes    (user_id, pushed_at);
+create index on subjects (user_id, pushed_at);
+create index on images   (user_id, pushed_at);
 
 -- Cada quien ve y toca sólo lo suyo. Esto es lo que protege los datos:
 -- la anon key es pública por diseño, RLS es la cerradura real.
@@ -139,6 +159,13 @@ Last-write-wins por `updated_at`, con tombstones (`deleted = 1`) para que los
 borrados también viajen. Si editás el mismo apunte en dos lados sin sincronizar en
 el medio, gana el que se guardó último. Para apuntes de clase es el comportamiento
 correcto: el riesgo real no es el conflicto, es perder lo que escribiste.
+
+Las dos columnas de tiempo cumplen roles distintos y no son intercambiables.
+`updated_at` viene del dispositivo y decide **quién gana**. `pushed_at` lo pone el
+servidor y decide **qué falta bajar**: cada dispositivo guarda la última marca que
+vio y pide `pushed_at >= esa marca`, con 60 segundos de margen para tolerar relojes
+desfasados. Volver a bajar una fila que ya se tenía no cuesta nada — el merge la
+descarta comparando `updated_at`.
 
 Las fotos suben una sola vez a `marginalia-img/<user-id>/<image-id>.jpg` y después
 sólo viaja la fila de metadatos.
