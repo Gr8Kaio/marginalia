@@ -216,6 +216,12 @@ siempre encima, y el tamaño y la posición de la ventana:
   "x": 1506, "y": 132, "width": 340, "height": 560 }
 ```
 
+Hay un solo widget por vez: abrir el acceso directo cuando ya está andando no
+levanta otro, hace aparecer el que había. (Dos instancias no molestan por la
+ventana repetida sino por el atajo, que se lo queda el que llegó primero.) Como
+los accesos directos abren con `pythonw.exe`, que no tiene consola, lo que pasa
+queda anotado en `%LOCALAPPDATA%\Marginalia\widget.log`.
+
 Para probar cambios sin publicarlos, `py desktop\widget.py --local` levanta el
 `index.html` de al lado en `127.0.0.1:8731` (siempre el mismo puerto: si cambiara,
 sería otro origen y otra base de datos en cada arranque).

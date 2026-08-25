@@ -51,6 +51,9 @@ _win = None
 _cfg = dict(DEFAULTS)
 _save_timer = None
 _folded_height = None
+# pywebview recuerda el `hidden` del arranque y nunca lo toca de nuevo, asi que
+# preguntarle si esta a la vista devuelve siempre lo mismo: lo contamos aparte.
+_visible = True
 
 
 # --------------------------------------------------------------------------
@@ -97,11 +100,24 @@ def default_position(width, height):
 # --------------------------------------------------------------------------
 # lo que la pagina puede pedirle a Windows
 # --------------------------------------------------------------------------
+def show_window():
+    global _visible
+    if _win:
+        _win.show()
+        _visible = True
+
+
+def hide_window():
+    global _visible
+    if _win:
+        _win.hide()
+        _visible = False
+
+
 class Api:
     def hide(self):
         """La cruz del widget lo guarda; para cerrarlo de verdad esta la bandeja."""
-        if _win:
-            _win.hide()
+        hide_window()
 
     def fold(self, folded, bar_height):
         """Colapsar deja sola la barra de titulo, como una persiana."""
@@ -173,12 +189,10 @@ def hotkey_thread(spec, on_press):
 
 def toggle_window():
     """Un atajo que solo muestra no sirve: la segunda vez tiene que esconder."""
-    if not _win:
-        return
-    if getattr(_win, "hidden", False):
-        _win.show()
+    if _visible:
+        hide_window()
     else:
-        _win.hide()
+        show_window()
 
 
 # --------------------------------------------------------------------------
@@ -221,6 +235,50 @@ def start_tray():
 # --------------------------------------------------------------------------
 # arranque
 # --------------------------------------------------------------------------
+def claim_single_instance():
+    """Una sola instancia: la segunda hace aparecer la primera y se va.
+
+    Dos widgets no molestan por la ventana repetida sino por el atajo: lo
+    registra el que llega primero y el segundo se queda mudo, respondiendo a
+    nada. El puerto de control queda anotado en LOCALAPPDATA; si el archivo es
+    de una instancia muerta, nadie contesta y seguimos de largo.
+    """
+    import socket
+
+    port_file = os.path.join(DATA_DIR, "control.port")
+    try:
+        with open(port_file, encoding="utf-8") as fh:
+            port = int(fh.read().strip())
+        with socket.create_connection(("127.0.0.1", port), timeout=1.5) as sock:
+            sock.sendall(b"show\n")
+            sock.recv(16)
+        return False
+    except (OSError, ValueError):
+        pass
+
+    server = socket.socket()
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind(("127.0.0.1", 0))
+    server.listen(4)
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(port_file, "w", encoding="utf-8") as fh:
+        fh.write(str(server.getsockname()[1]))
+
+    def serve():
+        while True:
+            try:
+                conn, _ = server.accept()
+                with conn:
+                    conn.recv(32)
+                    show_window()
+                    conn.sendall(b"ok\n")
+            except OSError:
+                return
+
+    threading.Thread(target=serve, daemon=True).start()
+    return True
+
+
 def serve_local():
     """Sirve el index.html de al lado para probar cambios sin publicarlos.
 
@@ -244,19 +302,37 @@ def serve_local():
 
 
 def main():
-    global _win, _cfg
+    global _win, _cfg, _visible
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(message)s",
-        handlers=[logging.StreamHandler(sys.stdout)],
-    )
     _cfg = load_config()
     os.makedirs(STORAGE_DIR, exist_ok=True)
 
+    # Los accesos directos abren con pythonw.exe, que no tiene consola: sin este
+    # archivo, un atajo que no responde o una bandeja que no aparece no dejan rastro.
+    handlers = [logging.FileHandler(os.path.join(DATA_DIR, "widget.log"), encoding="utf-8")]
+    if sys.stdout is not None:
+        handlers.append(logging.StreamHandler(sys.stdout))
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+        handlers=handlers,
+    )
+    log.info("arrancando (pid %d)", os.getpid())
+
+    if not claim_single_instance():
+        log.info("ya habia un widget andando: le pedi que se muestre y me voy")
+        return
+
     local = "--local" in sys.argv
-    hidden = "--hidden" in sys.argv
     url = serve_local() if local else _cfg["url"]
+
+    # La bandeja se decide antes que la ventana: escondida y sin icono no hay
+    # forma de traerla de vuelta, asi que sin icono arranca a la vista.
+    tray = start_tray()
+    hidden = "--hidden" in sys.argv and tray
+    if "--hidden" in sys.argv and not tray:
+        log.warning("sin bandeja, la ventana arranca a la vista")
+    _visible = not hidden
 
     x, y = _cfg["x"], _cfg["y"]
     if x is None or y is None:
@@ -290,15 +366,9 @@ def main():
     _win.events.moved += remember_move
     _win.events.resized += remember_size
 
-    tray = start_tray()
-    if tray:
-        threading.Thread(
-            target=hotkey_thread, args=(_cfg["hotkey"], toggle_window), daemon=True
-        ).start()
-    elif hidden:
-        # Escondido y sin bandeja no hay forma de recuperarlo: mejor visible.
-        log.warning("sin bandeja, la ventana arranca a la vista")
-        _win.show()
+    threading.Thread(
+        target=hotkey_thread, args=(_cfg["hotkey"], toggle_window), daemon=True
+    ).start()
 
     webview.start(
         private_mode=False,          # la sesion de Supabase tiene que sobrevivir al reinicio
