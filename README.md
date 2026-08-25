@@ -232,14 +232,22 @@ que usaste.
 propio perfil de navegador (`%LOCALAPPDATA%\Marginalia\webview`), así que para el
 sync es un dispositivo más: entra con la misma cuenta y baja todo.
 
+Para no tipear el proyecto en cada perfil nuevo, `widget.json` puede llevar
+`sync_url` y `sync_key`: el host se los pasa a la página al abrir y la página los
+guarda, **sin pisar nada si ese perfil ya tiene sesión**. Ahí sólo quedan el mail
+y la contraseña, que se escriben una vez y no se guardan en ningún archivo. La
+clave *publishable* no es un secreto — viaja en el cliente por diseño — pero vive
+en LOCALAPPDATA y no en el repo.
+
 Lo que se puede tocar sin abrir el código está en
 `%LOCALAPPDATA%\Marginalia\widget.json` — la URL que carga, el atajo, si va
 siempre encima, y el tamaño y la posición de la ventana:
 
 ```json
 { "url": "https://gr8kaio.github.io/marginalia/?widget=1",
-  "hotkey": "ctrl+alt+n", "on_top": true,
-  "x": 1506, "y": 132, "width": 340, "height": 560 }
+  "hotkey": "ctrl+alt+n", "on_top": true, "anchored": false,
+  "x": 1506, "y": 132, "width": 340, "height": 560,
+  "sync_url": "https://TU-PROYECTO.supabase.co", "sync_key": "sb_publishable_…" }
 ```
 
 Hay un solo widget por vez: abrir el acceso directo cuando ya está andando no

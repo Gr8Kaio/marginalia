@@ -37,6 +37,12 @@ DEFAULTS = {
     "hotkey": "ctrl+alt+n",
     "on_top": True,
     "anchored": False,  # pegado al fondo del escritorio en vez de flotando
+    # Datos del Supabase, para no tipearlos en cada perfil nuevo. No son
+    # secretos -- la clave publishable viaja en el cliente por diseno -- pero
+    # viven aca y no en el repo. La sesion (mail y contrasena) no se guarda:
+    # eso se escribe una vez desde el engranaje y queda en el perfil.
+    "sync_url": "",
+    "sync_key": "",
     "x": None,          # None = arriba a la derecha del monitor principal
     "y": None,
     "width": 340,
@@ -306,9 +312,12 @@ class Api:
         return _cfg["anchored"]
 
     def state(self):
-        """Lo que la barra necesita saber para dibujarse al abrir."""
-        return {"anchored": _cfg["anchored"], "on_top": _cfg["on_top"],
-                "hotkey": _cfg["hotkey"]}
+        """Lo que la pagina necesita saber al abrir."""
+        st = {"anchored": _cfg["anchored"], "on_top": _cfg["on_top"],
+              "hotkey": _cfg["hotkey"]}
+        if _cfg["sync_url"] and _cfg["sync_key"]:
+            st["sync"] = {"url": _cfg["sync_url"], "key": _cfg["sync_key"]}
+        return st
 
 
 # --------------------------------------------------------------------------

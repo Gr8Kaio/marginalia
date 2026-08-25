@@ -736,7 +736,7 @@
 
 <script>
 "use strict";
-const VERSION = "v1.4.0";
+const VERSION = "v1.5.0";
 
 /* Modo widget: la misma app, encogida en la ventana del escritorio
    (desktop/widget.py). Cambia la piel, nunca los datos. */
@@ -2148,6 +2148,17 @@ if (WIDGET){
   window.addEventListener("pywebviewready", async () => {
     document.documentElement.dataset.host = "desktop";
     const st = await host().state();
+
+    /* El host puede traer a qué Supabase apuntar. Sólo completa lo que falta:
+       si este perfil ya tiene sesión, no se toca nada. Falta el mail y la
+       contraseña, que se escriben una vez desde el engranaje. */
+    if (st && st.sync && !SYNC.url && !SYNC.key){
+      SYNC.url = st.sync.url;
+      SYNC.key = st.sync.key;
+      await persistSync();
+      renderWidgetState();
+      if (S.view === "settings") renderSettings();
+    }
     if (st && st.hotkey){
       HOTKEY = st.hotkey.split("+")
         .map(k => k.length === 1 ? k.toUpperCase() : k[0].toUpperCase() + k.slice(1))
