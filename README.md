@@ -30,16 +30,19 @@ sincronización es una capa encima: si está apagada, la app funciona igual.
 | --- | --- |
 | `Ctrl/Cmd + B` | Negrita |
 | `Ctrl/Cmd + I` | Cursiva |
-| `Ctrl/Cmd + E` | Alternar Escribir / Leer (el mismo botón de la barra) |
 | `Ctrl/Cmd + S` | Forzar guardado |
 | `Esc` | Cerrar hoja o foto ampliada |
 
-Escribir y leer son **un solo botón**, que nombra a dónde vas: dice *Leer* mientras
-escribís y *Escribir* mientras leés. Leyendo desaparece la barra de markdown, que
-ahí no hace nada.
+**No hay dónde alternar entre escribir y leer: es lo mismo.** Escribís `- ` y sale
+un bullet, `## ` y la línea se agranda, `**algo**` y queda en negrita — la sintaxis
+se usa y desaparece, nunca se ve. Igual con `> `, `1. `, `[] ` para tareas y
+` ``` ` para código.
 
-En pantallas de 1000 px o más el editor se parte en dos: escribís a la izquierda,
-la vista previa se actualiza a la derecha.
+Lo que se guarda sigue siendo markdown, que es lo que viaja al celu: el editor es
+una ida y vuelta (markdown → HTML al abrir, HTML → markdown al guardar) y está
+probada con 16 casos que tienen que volver idénticos. Las tablas se muestran pero
+no se editan desde acá: mantenerlas fieles importa más, y su markdown original
+viaja en el HTML para devolverlo tal cual.
 
 ## Sincronizar entre dispositivos
 
