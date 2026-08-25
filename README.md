@@ -170,6 +170,56 @@ descarta comparando `updated_at`.
 Las fotos suben una sola vez a `marginalia-img/<user-id>/<image-id>.jpg` y después
 sólo viaja la fila de metadatos.
 
+## El widget del escritorio (Windows)
+
+La misma app, encogida en una ventanita sin bordes que se queda arriba de todo:
+escribís algo al vuelo, lo guardás, y aparece en el celu como cualquier otro
+apunte. Abajo tiene el buscador de siempre y arriba los últimos apuntes tocados.
+
+No es una segunda app: es `index.html?widget=1` adentro de un WebView2. Los
+datos, el login, el sync y el editor son exactamente el mismo código. Lo único
+que agrega `desktop/widget.py` es lo que una página web no puede hacer sola en
+Windows — quedarse encima, un atajo global, un icono en la bandeja y una
+posición que sobrevive al reinicio.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File desktop\instalar.ps1
+```
+
+Eso instala `pywebview`, `pystray` y `pillow`, arma el icono y deja dos accesos
+directos: uno en el Escritorio y otro en el arranque de Windows (`-SinInicio` si
+no lo querés al prender la PC, `-Desinstalar` para sacar los dos).
+
+| | |
+| --- | --- |
+| **Ctrl+Alt+N** | mostrar u ocultar el widget desde cualquier lado |
+| **Ctrl+Enter** | guardar lo que escribiste |
+| **−** | colapsar: queda sólo la barra del título |
+| **×** | guardarlo en la bandeja (no cierra nada) |
+| **↗** | abrir la app entera en el navegador |
+
+La primera línea de lo que escribís es el título y el resto el cuerpo. Se guarda
+en la materia del desplegable, que arranca en *Inbox* y se acuerda de la última
+que usaste.
+
+**La primera vez hay que iniciar sesión desde el engranaje.** El widget tiene su
+propio perfil de navegador (`%LOCALAPPDATA%\Marginalia\webview`), así que para el
+sync es un dispositivo más: entra con la misma cuenta y baja todo.
+
+Lo que se puede tocar sin abrir el código está en
+`%LOCALAPPDATA%\Marginalia\widget.json` — la URL que carga, el atajo, si va
+siempre encima, y el tamaño y la posición de la ventana:
+
+```json
+{ "url": "https://gr8kaio.github.io/marginalia/?widget=1",
+  "hotkey": "ctrl+alt+n", "on_top": true,
+  "x": 1506, "y": 132, "width": 340, "height": 560 }
+```
+
+Para probar cambios sin publicarlos, `py desktop\widget.py --local` levanta el
+`index.html` de al lado en `127.0.0.1:8731` (siempre el mismo puerto: si cambiara,
+sería otro origen y otra base de datos en cada arranque).
+
 ## El nombre
 
 *Marginalia* son las notas que los lectores escriben en los márgenes de un libro —
