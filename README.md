@@ -30,9 +30,13 @@ sincronización es una capa encima: si está apagada, la app funciona igual.
 | --- | --- |
 | `Ctrl/Cmd + B` | Negrita |
 | `Ctrl/Cmd + I` | Cursiva |
-| `Ctrl/Cmd + E` | Alternar Escribir / Leer |
+| `Ctrl/Cmd + E` | Alternar Escribir / Leer (el mismo botón de la barra) |
 | `Ctrl/Cmd + S` | Forzar guardado |
 | `Esc` | Cerrar hoja o foto ampliada |
+
+Escribir y leer son **un solo botón**, que nombra a dónde vas: dice *Leer* mientras
+escribís y *Escribir* mientras leés. Leyendo desaparece la barra de markdown, que
+ahí no hace nada.
 
 En pantallas de 1000 px o más el editor se parte en dos: escribís a la izquierda,
 la vista previa se actualiza a la derecha.
@@ -194,9 +198,28 @@ no lo querés al prender la PC, `-Desinstalar` para sacar los dos).
 | --- | --- |
 | **Ctrl+Alt+N** | mostrar u ocultar el widget desde cualquier lado |
 | **Ctrl+Enter** | guardar lo que escribiste |
+| **⚓** | anclar al escritorio (ver abajo) |
 | **−** | colapsar: queda sólo la barra del título |
 | **×** | guardarlo en la bandeja (no cierra nada) |
 | **↗** | abrir la app entera en el navegador |
+
+### El ancla
+
+Por defecto el widget flota arriba de todo. Con el botón del ancla se cuelga del
+**fondo de pantalla**: deja de tapar cosas, sale de Alt+Tab, y se ve cuando se ve
+el escritorio — Win+D lo muestra, no lo esconde. Es la misma capa donde viven los
+fondos animados, colgada del `Progman` (el `WorkerW` que dice el manual no existe
+en este Windows 11: los iconos cuelgan del Progman directamente).
+
+**Anclado se mira pero no se toca.** Windows no le manda ni clicks ni teclas a lo
+que vive en el fondo de pantalla, y no hay forma de pedírselo — probado: el cursor
+está encima de la ventana, la página no recibe ni un `mousedown`, y forzar el foco
+no cambia nada. Por eso, estando anclado, **Ctrl+Alt+N cambia de significado**: lo
+despega y lo trae al frente para escribir, y la próxima vez lo devuelve al
+escritorio. La preferencia de estar anclado no se pierde en ese ida y vuelta.
+
+Como anclado el botón tampoco se puede clickear, el ancla también está en el menú
+del icono de la bandeja, que es la salida de emergencia.
 
 La primera línea de lo que escribís es el título y el resto el cuerpo. Se guarda
 en la materia del desplegable, que arranca en *Inbox* y se acuerda de la última

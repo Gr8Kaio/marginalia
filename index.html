@@ -235,12 +235,16 @@
     display:flex; align-items:center; gap:6px; margin-bottom:12px;
     padding-bottom:12px; border-bottom:1px solid var(--line); flex-wrap:wrap;
   }
-  .seg{display:flex; background:var(--sunk); border-radius:10px; padding:3px; gap:2px;}
-  .seg button{
-    padding:6px 14px; border-radius:8px; font-size:13.5px; font-weight:600;
-    color:var(--soft); transition:background .15s ease, color .15s ease;
+  /* Un solo boton para escribir y leer: dice a donde vas, no donde estas. */
+  .pane-btn{
+    display:flex; align-items:center; gap:7px; padding:6px 13px 6px 11px;
+    border-radius:10px; background:var(--sunk); color:var(--soft);
+    font-size:13.5px; font-weight:600; transition:background .15s ease, color .15s ease;
   }
-  .seg button.on{background:var(--raised); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.09);}
+  .pane-btn:hover{background:var(--accent-dim); color:var(--accent);}
+  .pane-btn svg{width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+  /* Leyendo no hay nada que formatear: la barra de markdown se va. */
+  .ed-bar.reading .tool{display:none;}
   .tool{
     width:34px; height:34px; border-radius:9px; display:flex; align-items:center;
     justify-content:center; color:var(--soft); font-size:14px; font-weight:600;
@@ -440,6 +444,7 @@
   }
   .wg-btn:hover{background:var(--sunk); color:var(--ink);}
   .wg-btn.danger:hover{background:var(--warm-dim); color:var(--danger);}
+  .wg-btn.on{background:var(--accent-dim); color:var(--accent);}
   .wg-btn svg{width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
   .host-only{display:none;}
   :root[data-host="desktop"] .host-only{display:flex;}
@@ -585,11 +590,8 @@
       <input class="ed-title" id="edTitle" placeholder="Título del apunte" autocomplete="off">
     </div>
 
-    <div class="ed-bar">
-      <div class="seg" id="edSeg">
-        <button data-pane="write" class="on">Escribir</button>
-        <button data-pane="read">Leer</button>
-      </div>
+    <div class="ed-bar" id="edBar">
+      <button class="pane-btn" id="edPane" title="Alternar entre escribir y leer (Ctrl+E)"></button>
       <button class="tool" data-md="bold" title="Negrita (Ctrl+B)"><strong>B</strong></button>
       <button class="tool" data-md="italic" title="Cursiva (Ctrl+I)"><em>I</em></button>
       <button class="tool" data-md="head" title="Encabezado">H</button>
@@ -692,6 +694,9 @@
       <button class="wg-btn" id="wgOpen" title="Abrir la app entera en el navegador" aria-label="Abrir la app entera">
         <svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-8.5 8.5M18 14v4.5A1.5 1.5 0 0 1 16.5 20h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10"/></svg>
       </button>
+      <button class="wg-btn host-only" id="wgAnchor" title="Anclar al escritorio" aria-label="Anclar al escritorio">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.4"/><path d="M12 7.4V21M7 11H17M4.5 15.5a7.5 7.5 0 0 0 15 0"/></svg>
+      </button>
       <button class="wg-btn host-only" id="wgFold" title="Colapsar a la barra" aria-label="Colapsar">
         <svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg>
       </button>
@@ -731,7 +736,7 @@
 
 <script>
 "use strict";
-const VERSION = "v1.2.1";
+const VERSION = "v1.3.0";
 
 /* Modo widget: la misma app, encogida en la ventana del escritorio
    (desktop/widget.py). Cambia la piel, nunca los datos. */
@@ -1364,13 +1369,23 @@ function autoGrow(){
   ta.style.height = Math.max(ta.scrollHeight, window.innerHeight * 0.55) + "px";
 }
 
+const ICO_READ  = `<path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>`;
+const ICO_WRITE = `<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>`;
+
 function setPane(p){
   S.pane = p;
-  $$("#edSeg button").forEach(b => b.classList.toggle("on", b.dataset.pane === p));
-  $("#paneWrite").classList.toggle("on", p === "write");
-  $("#paneRead").classList.toggle("on", p === "read");
-  if (p === "read") renderPreview();
+  const reading = p === "read";
+  $("#paneWrite").classList.toggle("on", !reading);
+  $("#paneRead").classList.toggle("on", reading);
+  $("#edBar").classList.toggle("reading", reading);
+  /* El boton nombra la otra mitad: estando en Escribir, ofrece Leer. */
+  $("#edPane").innerHTML =
+    `<svg viewBox="0 0 24 24">${reading ? ICO_WRITE : ICO_READ}</svg>` +
+    (reading ? "Escribir" : "Leer");
+  if (reading) renderPreview();
 }
+
+const flipPane = () => setPane(S.pane === "read" ? "write" : "read");
 
 function applySplit(){
   $("#edPanes").classList.toggle("split", window.innerWidth >= 1000);
@@ -1998,7 +2013,7 @@ $("#edBack").onclick = async () => {
 };
 $("#edTitle").oninput = markDirty;
 $("#edBody").oninput = () => { markDirty(); autoGrow(); if ($("#edPanes").classList.contains("split")) renderPreview(); };
-$$("#edSeg button").forEach(b => b.onclick = () => setPane(b.dataset.pane));
+$("#edPane").onclick = flipPane;
 $("#btnShot").onclick = () => $("#fileShot").click();
 $("#fileShot").onchange = async e => { await attachShots(Array.from(e.target.files || [])); e.target.value = ""; };
 
@@ -2039,7 +2054,7 @@ document.addEventListener("keydown", e => {
   if (k === "b"){ e.preventDefault(); wrapSel("**", "**"); }
   else if (k === "i"){ e.preventDefault(); wrapSel("*", "*"); }
   else if (k === "s"){ e.preventDefault(); flushEditor().then(() => toast("Guardado")); }
-  else if (k === "e"){ e.preventDefault(); setPane(S.pane === "write" ? "read" : "write"); }
+  else if (k === "e"){ e.preventDefault(); flipPane(); }
 });
 
 /* tab dentro del textarea inserta espacios, no salta de campo */
@@ -2108,9 +2123,38 @@ if (WIDGET){
   };
   $("#wgHide").onclick = () => { if (host()) host().hide(); };
 
+  /* Anclado, el widget se cuelga del fondo de pantalla: no tapa nada, sale de
+     Alt+Tab y aparece cuando aparece el escritorio. Lo que Windows no le da a
+     lo que vive ahí abajo es el teclado ni el mouse, así que para escribir hay
+     que traerlo al frente con el atajo. Lo hace Windows, no la página — por eso
+     el botón pregunta cómo quedó en vez de dar por hecho que quedó. */
+  let HOTKEY = "Ctrl+Alt+N";
+  const paintAnchor = on => {
+    $("#wgAnchor").classList.toggle("on", !!on);
+    $("#wgAnchor").title = on
+      ? `Anclado al escritorio · ${HOTKEY} lo trae al frente para escribir`
+      : "Anclar al escritorio (deja de tapar y sale de Alt+Tab)";
+  };
+  $("#wgAnchor").onclick = async () => {
+    if (!host()) return;
+    const on = !$("#wgAnchor").classList.contains("on");
+    const quedo = await host().anchor(on);
+    paintAnchor(quedo);
+    toast(quedo ? `En el escritorio · ${HOTKEY} para escribir` : "Suelto, arriba de todo");
+  };
+
   /* El host aparece un rato después de cargar la página; hasta que no está,
      colapsar y ocultar no tienen a quién pedírselo y quedan escondidos. */
-  window.addEventListener("pywebviewready", () => { document.documentElement.dataset.host = "desktop"; });
+  window.addEventListener("pywebviewready", async () => {
+    document.documentElement.dataset.host = "desktop";
+    const st = await host().state();
+    if (st && st.hotkey){
+      HOTKEY = st.hotkey.split("+")
+        .map(k => k.length === 1 ? k.toUpperCase() : k[0].toUpperCase() + k.slice(1))
+        .join("+");
+    }
+    paintAnchor(st && st.anchored);
+  });
 
   /* Una ventana que está abierta todo el día no dispara visibilitychange nunca:
      sin este intervalo, lo que escribís en el celu no baja hasta que la tocás. */
