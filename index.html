@@ -736,7 +736,7 @@
 
 <script>
 "use strict";
-const VERSION = "v1.3.0";
+const VERSION = "v1.4.0";
 
 /* Modo widget: la misma app, encogida en la ventana del escritorio
    (desktop/widget.py). Cambia la piel, nunca los datos. */
@@ -2123,24 +2123,24 @@ if (WIDGET){
   };
   $("#wgHide").onclick = () => { if (host()) host().hide(); };
 
-  /* Anclado, el widget se cuelga del fondo de pantalla: no tapa nada, sale de
-     Alt+Tab y aparece cuando aparece el escritorio. Lo que Windows no le da a
-     lo que vive ahí abajo es el teclado ni el mouse, así que para escribir hay
-     que traerlo al frente con el atajo. Lo hace Windows, no la página — por eso
-     el botón pregunta cómo quedó en vez de dar por hecho que quedó. */
+  /* Anclado, el widget se va al fondo del orden de ventanas: no tapa nada y
+     cualquier cosa que abras le pasa por encima, pero se sigue usando igual —
+     lo clickeás y escribís, y cuando pasás a otra cosa vuelve solo al fondo.
+     Lo hace Windows, no la página, por eso el botón pregunta cómo quedó en vez
+     de dar por hecho que quedó. */
   let HOTKEY = "Ctrl+Alt+N";
   const paintAnchor = on => {
     $("#wgAnchor").classList.toggle("on", !!on);
     $("#wgAnchor").title = on
-      ? `Anclado al escritorio · ${HOTKEY} lo trae al frente para escribir`
-      : "Anclar al escritorio (deja de tapar y sale de Alt+Tab)";
+      ? `Anclado al escritorio · tocá el ancla para soltarlo (o ${HOTKEY} para traerlo)`
+      : "Anclar al escritorio (no tapa nada y sale de Alt+Tab)";
   };
   $("#wgAnchor").onclick = async () => {
     if (!host()) return;
     const on = !$("#wgAnchor").classList.contains("on");
     const quedo = await host().anchor(on);
     paintAnchor(quedo);
-    toast(quedo ? `En el escritorio · ${HOTKEY} para escribir` : "Suelto, arriba de todo");
+    toast(quedo ? "Anclado al escritorio" : "Suelto, arriba de todo");
   };
 
   /* El host aparece un rato después de cargar la página; hasta que no está,

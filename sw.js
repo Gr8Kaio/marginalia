@@ -1,7 +1,7 @@
 /* Marginalia · service worker
    La app tiene que abrir sin señal: en un aula el wifi no existe.
    App shell cache-first; todo lo demás (Supabase) va directo a la red. */
-const CACHE = "marginalia-v1.3.0";
+const CACHE = "marginalia-v1.4.0";
 const SHELL = ["./", "./index.html"];
 
 self.addEventListener("install", e => {

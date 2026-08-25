@@ -56,7 +56,6 @@ _folded_height = None
 # preguntarle si esta a la vista devuelve siempre lo mismo: lo contamos aparte.
 _visible = True
 _hwnd = None       # ver find_own_window(): se busca una vez y se recuerda
-_floating = False  # anclado, pero traido al frente un rato para poder escribir
 _u32 = None        # user32 con las firmas ya declaradas
 
 
@@ -104,22 +103,31 @@ def default_position(width, height):
 # --------------------------------------------------------------------------
 # anclar al escritorio
 #
-# Anclado, el widget deja de ser una ventana mas y pasa a vivir en el fondo de
-# pantalla: no tapa nada, no aparece en Alt+Tab, y se ve cuando se ve el
-# escritorio. El truco es el mismo de los fondos animados -- pedirle al Progman
-# que cree el WorkerW que va detras de los iconos y colgar la ventana de ahi.
+# Anclado, el widget se queda en el fondo del orden de ventanas: no tapa nada,
+# no sale en Alt+Tab, y cualquier cosa que abras le pasa por encima. Pero sigue
+# siendo una ventana comun, y eso es todo el punto -- se clickea y se escribe.
+#
+# El primer intento fue colgarla del escritorio con SetParent al Progman, como
+# los fondos animados. Se veia hermoso y aparecia con Win+D, pero Windows no le
+# manda ni un click ni una tecla a lo que vive en esa capa: un widget de notas
+# donde no se puede escribir. Este camino cambia esa gracia por poder usarlo.
+#
+# Lo unico que hace falta es insistir: cuando otra ventana pasa al frente, la
+# nuestra vuelve al fondo. De eso se encarga el hook de EVENT_SYSTEM_FOREGROUND.
 # --------------------------------------------------------------------------
-WM_SPAWN_WORKER = 0x052C
-GA_PARENT = 1
 GWL_EXSTYLE = -20
 WS_EX_TOOLWINDOW = 0x00000080
 WS_EX_APPWINDOW = 0x00040000
-HWND_TOP = 0
+HWND_BOTTOM = 1
 HWND_TOPMOST = -1
 HWND_NOTOPMOST = -2
 SWP_NOSIZE = 0x0001
+SWP_NOMOVE = 0x0002
 SWP_NOACTIVATE = 0x0010
 SWP_SHOWWINDOW = 0x0040
+
+EVENT_SYSTEM_FOREGROUND = 0x0003
+WINEVENT_OUTOFCONTEXT = 0x0000
 
 WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, wintypes.HWND, wintypes.LPARAM)
 
@@ -128,7 +136,7 @@ def user32():
     """user32 con las firmas declaradas.
 
     Sin argtypes, ctypes manda los HWND como enteros de 32 bits y en 64 bits eso
-    los corta: SetParent recibe un handle que no existe, no falla, y no hace
+    los corta: la funcion recibe un handle que no existe, no falla, y no hace
     nada. Sintoma exacto: el anclaje "anda" y la ventana no se mueve de lugar.
     """
     global _u32
@@ -138,14 +146,6 @@ def user32():
     u.FindWindowW.restype = wintypes.HWND
     u.FindWindowExW.restype = wintypes.HWND
     u.FindWindowExW.argtypes = [wintypes.HWND, wintypes.HWND, wintypes.LPCWSTR, wintypes.LPCWSTR]
-    u.SetParent.restype = wintypes.HWND
-    u.SetParent.argtypes = [wintypes.HWND, wintypes.HWND]
-    u.GetAncestor.restype = wintypes.HWND
-    u.GetAncestor.argtypes = [wintypes.HWND, ctypes.c_uint]
-    u.GetForegroundWindow.restype = wintypes.HWND
-    u.SetFocus.restype = wintypes.HWND
-    u.SetFocus.argtypes = [wintypes.HWND]
-    u.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
     u.SetWindowPos.argtypes = [wintypes.HWND, wintypes.HWND, ctypes.c_int, ctypes.c_int,
                                ctypes.c_int, ctypes.c_int, ctypes.c_uint]
     u.GetWindowLongW.restype = ctypes.c_long
@@ -161,12 +161,10 @@ def user32():
 def find_own_window():
     """El HWND de nuestra ventana. Se busca una vez y se recuerda.
 
-    Dos motivos para el cache, los dos aprendidos a los golpes. Anclada, la
-    ventana deja de ser de primer nivel y EnumWindows no la ve nunca mas, asi
-    que sin recordarla no habria como soltarla. Y buscarla por titulo no sirve:
-    GetWindowText a una ventana de otro hilo va por SendMessage, y el hilo
-    grafico esta justo esperando a que esta funcion termine -- se traba sola.
-    La clase se lee sin mandar mensajes, por eso filtramos por ahi.
+    Se llama seguido -- el hook la pide en cada cambio de ventana -- y buscarla
+    por titulo no sirve: GetWindowText a una ventana de otro hilo va por
+    SendMessage, y el hilo grafico suele estar esperando a que esta funcion
+    termine, asi que se traba sola. La clase se lee sin mandar mensajes.
 
     (`window.native` de pywebview tampoco se toca: bloquea igual.)
     """
@@ -195,42 +193,17 @@ def find_own_window():
     return _hwnd
 
 
-def desktop_host():
-    """La ventana del escritorio que puede adoptar hijos.
-
-    El manual dice WorkerW: se le pide al Progman con un mensaje sin documentar
-    y aparece uno detras de los iconos. En este Windows 11 ese WorkerW no
-    aparece nunca -- los iconos cuelgan del Progman directamente -- asi que el
-    Progman no es un plan B, es el caso normal. Igual pedimos el WorkerW: donde
-    exista, es el lugar correcto.
-    """
+def sink_to_bottom():
+    """Mandar la ventana al fondo, sin robarle el foco a nadie."""
     u32 = user32()
-    progman = u32.FindWindowW("Progman", None)
-    if progman:
-        u32.SendMessageTimeoutW(progman, WM_SPAWN_WORKER, 0, 0, 0, 1000,
-                                ctypes.byref(ctypes.c_ulong()))
-    found = []
-
-    @WNDENUMPROC
-    def visit(hwnd, _):
-        # El WorkerW bueno es el hermano siguiente del que tiene los iconos.
-        if u32.FindWindowExW(hwnd, None, "SHELLDLL_DefView", None):
-            sibling = u32.FindWindowExW(None, hwnd, "WorkerW", None)
-            if sibling:
-                found.append(sibling)
-                return False
-        return True
-
-    u32.EnumWindows(visit, 0)
-    return found[0] if found else progman
+    hwnd = find_own_window()
+    if hwnd:
+        u32.SetWindowPos(hwnd, HWND_BOTTOM, 0, 0, 0, 0,
+                         SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE)
 
 
-def apply_anchor(anchored, remember=True):
-    """Cuelga la ventana del escritorio, o la devuelve a flotar arriba de todo.
-
-    `remember=False` es para el ida y vuelta del atajo: la ventana se despega
-    para que puedas escribir, pero la preferencia sigue siendo estar anclada.
-    """
+def apply_anchor(anchored):
+    """Anclar al escritorio, o devolver la ventana a flotar arriba de todo."""
     u32 = user32()
     hwnd = find_own_window()
     if not hwnd:
@@ -238,68 +211,55 @@ def apply_anchor(anchored, remember=True):
         return False
 
     exstyle = u32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-    x, y = _cfg["x"] or 0, _cfg["y"] or 0
-
     if anchored:
-        host = desktop_host()
-        if not host:
-            log.warning("no encontre el escritorio (ni WorkerW ni Progman)")
-            return False
-        ctypes.set_last_error(0)
-        u32.SetParent(hwnd, host)
-        # GetParent miente con las ventanas popup (devuelve el dueno, no el padre);
-        # el unico que dice la verdad de quien la contiene es GetAncestor.
-        if u32.GetAncestor(hwnd, GA_PARENT) != host:
-            log.warning("SetParent al escritorio no engancho (error %d)",
-                        ctypes.get_last_error())
-            return False
-        # Colgada del escritorio las coordenadas son relativas a el.
-        rect = wintypes.RECT()
-        u32.GetWindowRect(host, ctypes.byref(rect))
-        x, y = x - rect.left, y - rect.top
-        # Fuera de Alt+Tab: ya no es una ventana con la que se convive.
+        # Fuera de Alt+Tab: anclada no es una ventana con la que se convive.
         u32.SetWindowLongW(hwnd, GWL_EXSTYLE,
                            (exstyle | WS_EX_TOOLWINDOW) & ~WS_EX_APPWINDOW)
-        # HWND_TOP es entre los hijos del escritorio, o sea sobre los iconos y
-        # debajo de cualquier ventana de verdad. Al fondo quedaria tapada.
-        u32.SetWindowPos(hwnd, HWND_TOP, x, y, 0, 0,
-                         SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
+        u32.SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0,
+                         SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE)
+        sink_to_bottom()
     else:
-        u32.SetParent(hwnd, None)
         u32.SetWindowLongW(hwnd, GWL_EXSTYLE, exstyle & ~WS_EX_TOOLWINDOW)
         z = HWND_TOPMOST if _cfg["on_top"] else HWND_NOTOPMOST
-        u32.SetWindowPos(hwnd, z, x, y, 0, 0, SWP_NOSIZE | SWP_SHOWWINDOW)
+        u32.SetWindowPos(hwnd, z, 0, 0, 0, 0,
+                         SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW)
 
-    if remember:
-        _cfg["anchored"] = bool(anchored)
-        save_config()
-    log.info("anclado al escritorio: %s%s", anchored, "" if remember else " (temporal)")
+    _cfg["anchored"] = bool(anchored)
+    save_config()
+    log.info("anclado al escritorio: %s", _cfg["anchored"])
     return True
 
 
-def force_focus():
-    """Darle el teclado a la ventana anclada.
+WINEVENTPROC = ctypes.WINFUNCTYPE(None, wintypes.HANDLE, wintypes.DWORD, wintypes.HWND,
+                                  wintypes.LONG, wintypes.LONG, wintypes.DWORD,
+                                  wintypes.DWORD)
+_hook = None
+_hook_proc = None      # el callback tiene que sobrevivir al GC o Windows crashea
 
-    Colgada del escritorio deja de entrar en el reparto normal del foco: los
-    clicks llegan igual (el mouse va a la ventana que esta debajo del cursor)
-    pero lo que se teclea se lo lleva otra. SetFocus por si solo no alcanza
-    porque solo funciona dentro del hilo que ya tiene el foco, asi que primero
-    nos enganchamos a la cola de entrada de ese hilo.
+
+def watch_foreground():
+    """Cada vez que otra ventana pasa al frente, la nuestra vuelve al fondo.
+
+    Sin esto el anclaje dura hasta el primer click: al usar el widget Windows lo
+    activa y lo sube, que es justo lo que uno quiere mientras escribe -- pero
+    despues tiene que volver a su lugar solo.
     """
+    global _hook, _hook_proc
+    if _hook:
+        return
+
+    def on_foreground(hook, event, hwnd, id_obj, id_child, tid, when):
+        if not _cfg["anchored"]:
+            return
+        if hwnd and hwnd != find_own_window():
+            sink_to_bottom()
+
     u32 = user32()
-    hwnd = find_own_window()
-    if not hwnd:
-        return False
-    fg = u32.GetForegroundWindow()
-    mine = u32.GetWindowThreadProcessId(hwnd, None)
-    theirs = u32.GetWindowThreadProcessId(fg, None) if fg else mine
-    attached = theirs != mine and bool(u32.AttachThreadInput(theirs, mine, True))
-    try:
-        u32.SetFocus(hwnd)
-    finally:
-        if attached:
-            u32.AttachThreadInput(theirs, mine, False)
-    return True
+    _hook_proc = WINEVENTPROC(on_foreground)
+    _hook = u32.SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND,
+                                None, _hook_proc, 0, 0, WINEVENT_OUTOFCONTEXT)
+    if not _hook:
+        log.warning("sin hook de primer plano: el anclaje se va a soltar solo")
 
 
 def show_window():
@@ -342,14 +302,8 @@ class Api:
 
     def anchor(self, anchored):
         """El boton del ancla. Devuelve como quedo, no como se pidio."""
-        global _floating
         apply_anchor(bool(anchored))
-        _floating = False
         return _cfg["anchored"]
-
-    def focus(self):
-        """La pagina avisa que la tocaron; anclada, el teclado no viene solo."""
-        return force_focus()
 
     def state(self):
         """Lo que la barra necesita saber para dibujarse al abrir."""
@@ -386,19 +340,28 @@ def parse_hotkey(spec):
     return mods, key
 
 
-def hotkey_thread(spec, on_press):
-    """RegisterHotKey exige un loop de mensajes propio, en su mismo hilo."""
+def windows_thread(spec, on_press):
+    """El hilo con loop de mensajes: el atajo global y el hook viven aca.
+
+    Los dos lo necesitan. RegisterHotKey manda WM_HOTKEY a la cola del hilo que
+    lo registro, y un WinEventHook fuera de proceso solo entrega sus avisos a un
+    hilo que este bombeando mensajes. Por eso el loop corre aunque el atajo
+    falle: sin el, el anclaje se soltaria con la primera ventana que abras.
+    """
+    u32 = ctypes.windll.user32
     combo = parse_hotkey(spec)
     if combo is None:
         log.warning("atajo ilegible, va sin atajo: %r", spec)
-        return
-    mods, key = combo
-    u32 = ctypes.windll.user32
-    if not u32.RegisterHotKey(None, 1, mods | MOD_NOREPEAT, key):
-        # Casi siempre significa que otro programa ya se quedo con esa combinacion.
-        log.warning("Windows no dio el atajo %s (ya esta tomado)", spec)
-        return
-    log.info("atajo %s registrado", spec)
+    else:
+        mods, key = combo
+        if u32.RegisterHotKey(None, 1, mods | MOD_NOREPEAT, key):
+            log.info("atajo %s registrado", spec)
+        else:
+            # Casi siempre es que otro programa ya se quedo con esa combinacion.
+            log.warning("Windows no dio el atajo %s (ya esta tomado)", spec)
+
+    watch_foreground()
+
     msg = wintypes.MSG()
     while u32.GetMessageW(ctypes.byref(msg), None, 0, 0) != 0:
         if msg.message == WM_HOTKEY:
@@ -409,27 +372,16 @@ def hotkey_thread(spec, on_press):
 
 
 def toggle_window():
-    """Que hace el atajo depende de donde esta la ventana.
+    """Un atajo que solo muestra no sirve: la segunda vez tiene que esconder.
 
-    Suelta, la muestra y la esconde. Anclada, no puede hacer eso: en el
-    escritorio la ventana se ve pero no recibe ni clicks ni teclas -- Windows
-    no le manda input a lo que cuelga del fondo de pantalla. Entonces el atajo
-    pasa a ser el modo de escribir: la despega, la trae al frente, y la
-    siguiente vez la devuelve al escritorio.
+    Anclada tambien sirve para lo otro que uno quiere: la ventana aparece
+    activada, arriba de lo que haya, lista para escribir. Cuando pasas a otra
+    cosa, el hook la devuelve al fondo sola.
     """
-    global _floating
-    if _cfg["anchored"]:
-        if _floating:
-            apply_anchor(True, remember=False)
-            _floating = False
-        else:
-            apply_anchor(False, remember=False)
-            _floating = True
-            show_window()
-            force_focus()
-        return
-    if _visible:
+    if _visible and not _cfg["anchored"]:
         hide_window()
+    elif _visible:
+        show_window()      # anclada: traerla al frente y darle el teclado
     else:
         show_window()
 
@@ -457,9 +409,7 @@ def start_tray():
         save_config()
 
     def flip_anchor(icon, item):
-        global _floating
         apply_anchor(not _cfg["anchored"])
-        _floating = False
 
     def quit_all(icon, item):
         icon.stop()
@@ -471,8 +421,6 @@ def start_tray():
         pystray.MenuItem("Siempre encima", flip_on_top, checked=lambda item: _cfg["on_top"]),
         pystray.MenuItem("Anclado al escritorio", flip_anchor,
                          checked=lambda item: _cfg["anchored"]),
-        pystray.MenuItem("Traer al frente para escribir", lambda i, it: toggle_window(),
-                         visible=lambda item: _cfg["anchored"]),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem("Abrir la app entera",
                          lambda i, it: webbrowser.open(_cfg["url"].split("?")[0])),
@@ -627,7 +575,7 @@ def main():
     _win.events.shown += on_shown
 
     threading.Thread(
-        target=hotkey_thread, args=(_cfg["hotkey"], toggle_window), daemon=True
+        target=windows_thread, args=(_cfg["hotkey"], toggle_window), daemon=True
     ).start()
 
     webview.start(

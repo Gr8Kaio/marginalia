@@ -205,21 +205,24 @@ no lo querés al prender la PC, `-Desinstalar` para sacar los dos).
 
 ### El ancla
 
-Por defecto el widget flota arriba de todo. Con el botón del ancla se cuelga del
-**fondo de pantalla**: deja de tapar cosas, sale de Alt+Tab, y se ve cuando se ve
-el escritorio — Win+D lo muestra, no lo esconde. Es la misma capa donde viven los
-fondos animados, colgada del `Progman` (el `WorkerW` que dice el manual no existe
-en este Windows 11: los iconos cuelgan del Progman directamente).
+Por defecto el widget flota arriba de todo. Un click en el ancla lo manda al
+**fondo del orden de ventanas**: deja de tapar cosas, sale de Alt+Tab, y Win+D lo
+deja donde está en vez de minimizarlo (eso último es gracias al estilo
+*tool window*). Otro click lo suelta. Se sigue usando igual que siempre: lo
+clickeás, escribís, guardás; cuando pasás a otra ventana, vuelve al fondo solo.
 
-**Anclado se mira pero no se toca.** Windows no le manda ni clicks ni teclas a lo
-que vive en el fondo de pantalla, y no hay forma de pedírselo — probado: el cursor
-está encima de la ventana, la página no recibe ni un `mousedown`, y forzar el foco
-no cambia nada. Por eso, estando anclado, **Ctrl+Alt+N cambia de significado**: lo
-despega y lo trae al frente para escribir, y la próxima vez lo devuelve al
-escritorio. La preferencia de estar anclado no se pierde en ese ida y vuelta.
+Ese "vuelve solo" es un hook de `EVENT_SYSTEM_FOREGROUND`: cada vez que otra
+ventana pasa al frente, la nuestra se rehunde. Sin eso el anclaje duraría hasta el
+primer click, porque usar el widget lo activa y lo sube — que es justo lo que uno
+quiere *mientras* escribe.
 
-Como anclado el botón tampoco se puede clickear, el ancla también está en el menú
-del icono de la bandeja, que es la salida de emergencia.
+**Lo que no es.** El primer intento fue colgar la ventana del escritorio con
+`SetParent` al `Progman`, como los fondos animados: se veía perfecto, pero Windows
+no le manda ni un `mousedown` ni una tecla a lo que vive en esa capa, y forzar el
+foco tampoco alcanza (probado, no supuesto). Un widget de notas donde no se puede
+escribir no sirve, así que quedó el camino de arriba.
+
+El ancla también está en el menú del icono de la bandeja.
 
 La primera línea de lo que escribís es el título y el resto el cuerpo. Se guarda
 en la materia del desplegable, que arranca en *Inbox* y se acuerda de la última
